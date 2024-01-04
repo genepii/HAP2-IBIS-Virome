@@ -1,0 +1,46 @@
+---
+  
+```{r echo=FALSE,results="asis"}
+
+library(dplyr)
+library(qwraps2)
+library(ggplot2)
+options(qwraps2_markup="markdown")
+setwd("~")
+
+file_clinical="IBIS_clinical_qwraps2.txt"
+read.delim(file_clinical)->clinical
+
+clinical$Age<-as.numeric(clinical$Age)
+
+
+our_summary <- list(
+  "Age" = list("Age n; median (IQR)" = ~ qwraps2::median_iqr(Age, na_rm = TRUE)),
+  "Sex" = list("Male n (%)" = ~ qwraps2::n_perc(Sex == "M", na_rm = TRUE)),
+  "HAP_condition" = list("HAP_condition n (%)" = ~ qwraps2::n_perc(HAP_condition == "HAP", na_rm = TRUE)),
+  "Death" = list("Death n (%)" = ~ qwraps2::n_perc(Death == "Deceased", na_rm = TRUE)),
+  "ARDS_condition" = list("ARDS_condition n (%)" = ~ qwraps2::n_perc(ARDS_condition == "ARDS", na_rm = TRUE)),
+  "Tracheobronchitis_condition"= list("Tracheobronchitis_condition n (%)" = ~ qwraps2::n_perc(Tracheobronchitis_condition == "YES", na_rm = TRUE)),
+  "VAP_condition"= list("VAP_condition n (%)" = ~ qwraps2::n_perc(VAP_condition == "YES", na_rm = TRUE))
+)
+
+pvalues <- list(
+  "Age" = list("Age n; median (IQR)" =~round(kruskal.test(Age ~ HAP_condition, clinical)$p.value, digits = 3)),
+  "Sex" = list("Male n (%)" =~round(chisq.test(clinical$Sex, clinical$HAP_condition)$p.value, digits = 3)),
+  "HAP_condition" = list("HAP_condition n (%)" =~round(chisq.test(clinical$HAP_condition, clinical$HAP_condition)$p.value, digits = 3)),
+  "Death" = list("Death n (%)" =~round(chisq.test(clinical$Death, clinical$HAP_condition)$p.value, digits = 3)),
+  "ARDS_condition" = list("ARDS_condition n (%)" =~round(chisq.test(clinical$ARDS_condition, clinical$HAP_condition)$p.value, digits = 3)),
+  "Tracheobronchitis_condition" = list("Tracheobronchitis_condition n (%)" =~round(chisq.test(Tracheobronchitis_condition, clinical$HAP_condition)$p.value, digits = 3)),
+  "VAP_condition" = list("VAP_condition n (%)" =~round(chisq.test(VAP_condition, clinical$HAP_condition)$p.value, digits = 3))
+)
+
+combined_summary <- cbind(
+  qwraps2::summary_table(dplyr::group_by(clinical, HAP_condition), our_summary),
+  qwraps2::summary_table(clinical, pvalues)
+)
+
+
+stargazer::stargazer(combined_summary, type = "html", out = "Clinical_table.html")
+
+
+```
