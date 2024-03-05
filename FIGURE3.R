@@ -2,52 +2,188 @@
 #### CODE USED TO GENERATE FIGURE 3
 ############################################################################################################################
 
-# NMDS FIGURE 3A - NMDS Upcoming/noHAP
+# Alphadiv FIGURE 3A - Alphadiv Upcoming/noHAP
 
-library(vegan)
-library(tidyverse)
-library(ggplot2)
+#Dot plot - Shannon
 
-set.seed(1)
-data1<-read.delim("RPKMcounts.txt", row.names = 1)
-dataTransposed1<-t(data1)
-dist.1 <- vegdist(dataTransposed1, method = "bray")
-metadata <- read.delim("metadata.txt")
+data<-read.delim("IBIS_clinical_final_Upcoming_noHAP.txt", row.names = 1)
+data %>% sample_n_by(GROUP, size = 2)
+data %>%
+  group_by(GROUP) %>%
+  get_summary_stats(Shannon, type = "median_iqr")
+stat.test <- data %>% 
+  wilcox_test(Shannon ~ GROUP) %>%
+  add_significance()
+stat.test
+data %>% wilcox_effsize(Shannon ~ GROUP)
 
-ano = anosim(dataTransposed1, metadata$GROUP, distance = "bray", permutations = 9999)
-ano
-plot(ano)
-
-nmds = metaMDS(dataTransposed1, distance = "bray")
-nmds
-plot(nmds)
+summary_stats <- data %>%
+  group_by(GROUP) %>%
+  summarise(median = median(Shannon),
+            p25 = quantile(Shannon, 0.25),
+            p75 = quantile(Shannon, 0.75))
 
 
-ta.scores = as.data.frame(scores(nmds)$sites)
-metadata$GROUP = metadata$GROUP
+Shannon_dotplot_upcoming_noHAP <- ggplot(data, aes(GROUP, Shannon)) +
+  geom_dotplot(method = "histodot", binaxis = "y", stackratio = 1,stackdir = "center", binpositions="all", binwidth = 0.1, dotsize = 1, aes(fill = GROUP, stroke = GROUP)) +
+  scale_fill_manual(values = c("NO_HAP" = "blue", "Upcoming_HAP" = "pink")) + # Set colors
+  stat_pvalue_manual(stat.test, tip.length = 0, size = 10, y.position = 6, bracket.size = 2) +
+  scale_y_continuous(breaks = c(0,1,2,3,4,5)) +
+  labs(subtitle = get_test_label(stat.test, detailed = TRUE), y = "Shannon") +
+  labs(subtitle = get_test_label(stat.test, detailed = TRUE), y = "Shannon") +
+  theme_classic()+
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_text(size = 20),
+        axis.text.x = element_text(size = 20),
+        axis.text.y = element_text(size = 20),
+        plot.subtitle = element_text(size = 20),
+        legend.text = element_text(size = 20), legend.position = "none") +
+  labs(
+    subtitle = get_test_label(stat.test, detailed = FALSE),
+    y = "Shannon index"
+  ) +
+  labs(
+    subtitle = get_test_label(stat.test, detailed = FALSE),
+    y = "Shannon index"
+  )
+Shannon_dotplot_upcoming_noHAP
 
-NMDS_Upcoming_noHAP = ggplot(metadata, aes(x = ta.scores$NMDS1, y = ta.scores$NMDS2)) + 
-  geom_point(aes(size = Richness, colour = GROUP))+ 
-  theme(axis.text.y = element_text(colour = "black", size = 12, face = "bold"), 
-        axis.text.x = element_text(colour = "black", face = "bold", size = 12), 
-        legend.text = element_text(size = 12, face ="bold", colour ="black"), 
-        legend.position = "right", axis.title.y = element_text(face = "bold", size = 14), 
-        axis.title.x = element_text(face = "bold", size = 14, colour = "black"), 
-        legend.title = element_text(size = 14, colour = "black", face = "bold"), 
-        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA, size = 1.2),
-        legend.key=element_blank()) + 
-  labs(x = "NMDS1", colour = "GROUP", y = "NMDS2", shape = "Type")  + 
-  scale_colour_manual(values = c("BLUE","PINK")) + stat_ellipse(geom = "polygon", aes(group = GROUP, color = GROUP, fill = GROUP), alpha = 0.05) +
-  annotate("text", x = -2, y = 7, label = paste0("Stress: ", format(nmds$stress, digits = 4)), hjust = 2.5) +
-  annotate("text", x = -2, y = 6, label = paste0("P=", format(ano$signif, digits = 4)), hjust = 4)
-
-NMDS_Upcoming_noHAP
-
-pdf("NMDS_Upcoming_noHAP.pdf",width=10,height=5);
-NMDS_Upcoming_noHAP
+pdf("Shannon_dotplot_upcoming_noHAP.pdf",width=12,height=8);
+Shannon_dotplot_upcoming_noHAP
 dev.off()
 
-# PCOA FIGURE 3B - PCOA Upcoming/noHAP
+#Loess plot - Shannon index
+
+data<-read.delim("IBIS_clinical_final_Upcoming_noHAP.txt", row.names = 1)
+custom_colors <- c("Upcoming_HAP" = "pink", "NO_HAP" = "#0000FF")
+
+# loess with custom colors
+Shannon_loessPlot <- ggplot(data, aes(x = HAP_onset, y = Shannon, color = GROUP, group = GROUP)) +
+  geom_point(shape =20, size=7) +
+  scale_y_continuous(breaks = c(0,1,2,3,4,5))+
+  stat_smooth(metho1 = "loess", formula = y ~ x, aes(fill = GROUP), alpha = 0.3) +
+  scale_x_continuous(breaks = c(-6,-5, -4, -3,-2,-1)) +
+  scale_color_manual(values = custom_colors) +  # Add custom colors for points
+  scale_fill_manual(values = custom_colors) +   # Add custom colors for stat_smooth
+  theme_classic() +
+  theme(
+    axis.text = element_text(size = 20),        # Adjust size of axis text
+    axis.title = element_text(size = 20),       # Adjust size of axis titles
+    legend.text = element_text(size = 20),      # Adjust size of legend text
+    legend.title = element_blank()      # Adjust size of legend title
+  ) +
+  xlab("Days relative to HAP onset") +  # Add or modify the x-axis label
+  ylab("Shannon index")    # Add or modify the y-axis label
+
+
+Shannon_loessPlot
+
+pdf("Shannon_loessPlot_up.pdf",width=12,height=8);
+Shannon_loessPlot
+dev.off()
+
+
+
+#compile loess and dot plot
+
+top_shannon <- plot_grid(Shannon_loessPlot, Shannon_dotplot_upcoming_noHAP, ncol=2, rel_widths=c(1, 0.4), align = "h")
+top_shannon
+
+pdf("Shannon_compiled_upcoming.pdf",width=12,height=8);
+top_shannon
+dev.off()
+
+# Alphadiv FIGURE 3B - Alphadiv Upcoming/noHAP
+
+#Loess plot - Richness
+data<-read.delim("IBIS_clinical_final_Upcoming_noHAP.txt", row.names = 1)
+custom_colors <- c("Upcoming_HAP" = "pink", "NO_HAP" = "#0000FF")
+
+# loess with custom colors
+Richness_loessPlot <- ggplot(data, aes(x = HAP_onset, y = Richness, color = GROUP, group = GROUP)) +
+  geom_point(shape =20, size=7) +
+  scale_y_continuous(breaks = c(0,500,1000,1500,2000,2500,3000)
+  )+
+  stat_smooth(metho1 = "lm", formula = y ~ x, aes(fill = GROUP), alpha = 0.3) +
+  scale_x_continuous(breaks = c(-6,-5, -4, -3,-2,-1)) +
+  scale_color_manual(values = custom_colors) +  # Add custom colors for points
+  scale_fill_manual(values = custom_colors) +   # Add custom colors for stat_smooth
+  theme_classic() +
+  theme(
+    axis.text = element_text(size = 20),        # Adjust size of axis text
+    axis.title = element_text(size = 20),       # Adjust size of axis titles
+    legend.text = element_text(size = 20),      # Adjust size of legend text
+    legend.title = element_blank()      # Adjust size of legend title
+  ) +
+  xlab("Days relative to HAP onset") +  # Add or modify the x-axis label
+  ylab("Richness")    # Add or modify the y-axis label
+
+
+Richness_loessPlot
+
+pdf("Richness_loessPlot_up.pdf",width=12,height=8);
+Richness_loessPlot
+dev.off()
+
+#Dot plot - Richness
+
+data<-read.delim("IBIS_clinical_final_Upcoming_noHAP.txt", row.names = 1)
+data %>% sample_n_by(GROUP, size = 2)
+data %>%
+  group_by(GROUP) %>%
+  get_summary_stats(Richness, type = "median_iqr")
+stat.test <- data %>% 
+  wilcox_test(Richness ~ GROUP) %>%
+  add_significance()
+stat.test
+data %>% wilcox_effsize(Richness ~ GROUP)
+
+summary_stats <- data %>%
+  group_by(GROUP) %>%
+  summarise(median = median(Richness),
+            p25 = quantile(Richness, 0.25),
+            p75 = quantile(Richness, 0.75))
+
+
+Richness_dotplot_upcoming_noHAP <- ggplot(data, aes(GROUP, Richness)) +
+  geom_dotplot(method = "histodot", binaxis = "y", stackratio = 1,stackdir = "center", binpositions="all", binwidth = 40, dotsize = 1, aes(fill = GROUP, stroke = GROUP)) +
+  scale_fill_manual(values = c("NO_HAP" = "blue", "Upcoming_HAP" = "pink")) + # Set colors
+  stat_pvalue_manual(stat.test, tip.length = 0, size = 10, y.position = 2100, bracket.size = 2) +
+  labs(subtitle = get_test_label(stat.test, detailed = TRUE), y = "Richness") +
+  labs(subtitle = get_test_label(stat.test, detailed = TRUE), y = "Richness") +
+  theme_classic()+
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_text(size = 20),
+        axis.text.x = element_text(size = 20),
+        axis.text.y = element_text(size = 20),
+        plot.subtitle = element_text(size = 20),
+        legend.text = element_text(size = 20), legend.position = "none") +
+  labs(
+    subtitle = get_test_label(stat.test, detailed = FALSE),
+    y = "Richness"
+  ) +
+  labs(
+    subtitle = get_test_label(stat.test, detailed = FALSE),
+    y = "Richness"
+  )
+Richness_dotplot_upcoming_noHAP
+
+pdf("Richness_dotplot_upcoming_noHAP.pdf",width=12,height=8);
+Richness_dotplot_upcoming_noHAP
+dev.off()
+
+
+#compile loess and dot plot
+
+top_richness <- plot_grid(Richness_loessPlot, Richness_dotplot_upcoming_noHAP, ncol=2, rel_widths=c(1, 0.4), align = "h")
+top_richness
+
+pdf("Richness_compiled_upcoming.pdf",width=12,height=8);
+top_richness
+dev.off()
+
+
+# PCOA FIGURE 3C - PCOA Upcoming/noHAP
 
 data1<-read.delim("RPKMcounts.txt", row.names = 1)
 x<-t(data1)
@@ -132,104 +268,55 @@ pdf("PCOA_Upcoming_noHAP.pdf",width=7,height=3.5);
 together2
 dev.off()
 
-# Alphadiv FIGURE 3C - Alphadiv Upcoming/noHAP
 
-#Dot plot - Richness
+# NMDS FIGURE 3D - NMDS Upcoming/noHAP
 
-data<-read.delim("Richness_over_time.txt", row.names = 1)
-data %>% sample_n_by(GROUP, size = 2)
-data %>%
-  group_by(GROUP) %>%
-  get_summary_stats(Richness, type = "median_iqr")
-stat.test <- data %>% 
-  wilcox_test(Richness ~ GROUP) %>%
-  add_significance()
-stat.test
-data %>% wilcox_effsize(Richness ~ GROUP)
+library(vegan)
+library(tidyverse)
+library(ggplot2)
 
-summary_stats <- data %>%
-  group_by(GROUP) %>%
-  summarise(median = median(Richness),
-            p25 = quantile(Richness, 0.25),
-            p75 = quantile(Richness, 0.75))
+set.seed(1)
+data1<-read.delim("RPKMcounts.txt", row.names = 1)
+dataTransposed1<-t(data1)
+dist.1 <- vegdist(dataTransposed1, method = "bray")
+metadata <- read.delim("metadata.txt")
+
+ano = anosim(dataTransposed1, metadata$GROUP, distance = "bray", permutations = 9999)
+ano
+plot(ano)
+
+nmds = metaMDS(dataTransposed1, distance = "bray")
+nmds
+plot(nmds)
 
 
-Richness_dotplot_upcoming_noHAP <- ggplot(data, aes(GROUP, Richness)) +
-  geom_dotplot(method = "histodot", binaxis = "y", stackratio = 1,stackdir = "center", binpositions="all", binwidth = 80, dotsize = 1, aes(fill = GROUP, stroke = GROUP)) +
-  scale_fill_manual(values = c("NO_HAP" = "blue", "Upcoming_HAP" = "pink")) + 
-  stat_pvalue_manual(stat.test, tip.length = 0, size = 10, y.position = 3000, bracket.size = 2) +
-  labs(subtitle = get_test_label(stat.test, detailed = TRUE), y = "Richness") +
-  labs(subtitle = get_test_label(stat.test, detailed = TRUE), y = "Richness") +
-  theme_classic()+
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_text(size = 20),
-        axis.text.x = element_text(size = 20),
-        axis.text.y = element_text(size = 20),
-        plot.subtitle = element_text(size = 20),
-        legend.text = element_text(size = 20), legend.position = "none") +
-  labs(
-    subtitle = get_test_label(stat.test, detailed = FALSE),
-    y = "Richness"
-  ) +
-  labs(
-    subtitle = get_test_label(stat.test, detailed = FALSE),
-    y = "Richness"
-  )
-Richness_dotplot_upcoming_noHAP
+ta.scores = as.data.frame(scores(nmds)$sites)
+metadata$GROUP = metadata$GROUP
 
-pdf("Richness_dotplot_upcoming_noHAP.pdf",width=12,height=8);
-Richness_dotplot_upcoming_noHAP
+NMDS_Upcoming_noHAP = ggplot(metadata, aes(x = ta.scores$NMDS1, y = ta.scores$NMDS2)) + 
+  geom_point(aes(size = Richness, colour = GROUP))+ 
+  theme(axis.text.y = element_text(colour = "black", size = 12, face = "bold"), 
+        axis.text.x = element_text(colour = "black", face = "bold", size = 12), 
+        legend.text = element_text(size = 12, face ="bold", colour ="black"), 
+        legend.position = "right", axis.title.y = element_text(face = "bold", size = 14), 
+        axis.title.x = element_text(face = "bold", size = 14, colour = "black"), 
+        legend.title = element_text(size = 14, colour = "black", face = "bold"), 
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA, size = 1.2),
+        legend.key=element_blank()) + 
+  labs(x = "NMDS1", colour = "GROUP", y = "NMDS2", shape = "Type")  + 
+  scale_colour_manual(values = c("BLUE","PINK")) + stat_ellipse(geom = "polygon", aes(group = GROUP, color = GROUP, fill = GROUP), alpha = 0.05) +
+  annotate("text", x = -2, y = 7, label = paste0("Stress: ", format(nmds$stress, digits = 4)), hjust = 2.5) +
+  annotate("text", x = -2, y = 6, label = paste0("P=", format(ano$signif, digits = 4)), hjust = 4)+
+  scale_x_continuous(breaks = c(-6,-3,0, 3, 6)) +
+  scale_y_continuous(breaks = c(-6,-3,0, 3, 6))
+
+NMDS_Upcoming_noHAP
+
+pdf("NMDS_Upcoming_noHAP.pdf",width=10,height=5);
+NMDS_Upcoming_noHAP
 dev.off()
 
-
-#Dot plot - Shannon
-
-data<-read.delim("ShanonDiversity_over_time.txt", row.names = 1)
-data %>% sample_n_by(GROUP, size = 2)
-data %>%
-  group_by(GROUP) %>%
-  get_summary_stats(Shannon, type = "median_iqr")
-stat.test <- data %>% 
-  wilcox_test(Shannon ~ GROUP) %>%
-  add_significance()
-stat.test
-data %>% wilcox_effsize(Shannon ~ GROUP)
-
-summary_stats <- data %>%
-  group_by(GROUP) %>%
-  summarise(median = median(Shannon),
-            p25 = quantile(Shannon, 0.25),
-            p75 = quantile(Shannon, 0.75))
-
-
-Shannon_dotplot_upcoming_noHAP <- ggplot(data, aes(GROUP, Shannon)) +
-  geom_dotplot(method = "histodot", binaxis = "y", stackratio = 1,stackdir = "center", binpositions="all", binwidth = 0.2, dotsize = 1, aes(fill = GROUP, stroke = GROUP)) +
-  scale_fill_manual(values = c("NO_HAP" = "blue", "Upcoming_HAP" = "pink")) +
-  stat_pvalue_manual(stat.test, tip.length = 0, size = 10, y.position = 7, bracket.size = 2) +
-  labs(subtitle = get_test_label(stat.test, detailed = TRUE), y = "Shannon") +
-  labs(subtitle = get_test_label(stat.test, detailed = TRUE), y = "Shannon") +
-  theme_classic()+
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_text(size = 20),
-        axis.text.x = element_text(size = 20),
-        axis.text.y = element_text(size = 20),
-        plot.subtitle = element_text(size = 20),
-        legend.text = element_text(size = 20), legend.position = "none") +
-  labs(
-    subtitle = get_test_label(stat.test, detailed = FALSE),
-    y = "Shannon index"
-  ) +
-  labs(
-    subtitle = get_test_label(stat.test, detailed = FALSE),
-    y = "Shannon index"
-  )
-Shannon_dotplot_upcoming_noHAP
-
-pdf("Shannon_dotplot_upcoming_noHAP.pdf",width=12,height=8);
-Shannon_dotplot_upcoming_noHAP
-dev.off()
-
-# FIGURE 3D - WBC
+# FIGURE 3E - WBC
 
 library(ggplot2)
 library(tidyverse)
@@ -274,7 +361,7 @@ pdf("WBC_Between_violin_Upcoming_noHAP.pdf",width=12,height=9);
 WBC_Between_violin_Upcoming_noHAP
 dev.off()
 
-# FIGURE 3D - Hellinger
+# FIGURE 3E - Hellinger
 
 library(ggplot2)
 library(tidyverse)
@@ -319,7 +406,7 @@ pdf("Hellinger_Between_violin_Upcoming_noHAP.pdf",width=12,height=9);
 Hellinger_Between_violin_Upcoming_noHAP
 dev.off()
 
-# FIGURE 3D - Sorensen
+# FIGURE 3E - Sorensen
 
 library(ggplot2)
 library(tidyverse)
