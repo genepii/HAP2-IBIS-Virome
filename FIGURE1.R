@@ -7,7 +7,7 @@
 library(pheatmap)
 matrix <- read.delim("RPKMcounts.txt", header = TRUE, sep = "\t", row.names = 1)
 matrix <- na.omit(matrix)
-transformed_matrix <- log10(matrix+1)
+transformed_matrix <- log(matrix+0.01)
 my_sample_col <- read.table("metadata.txt", header = TRUE, sep = "\t",row.names = 1)
 
 family_sums <- rowSums(transformed_matrix)
