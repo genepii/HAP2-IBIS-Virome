@@ -20,8 +20,8 @@ The scripts are detailed by figure
 - FIGURE3
 - FIGURE4
 - FIGURE5
-- FIGURE6
 
 ## Additional scripts
 -  Clinical_table
 -  Additional_shell_scripts
+-  Additional_R_scripts
