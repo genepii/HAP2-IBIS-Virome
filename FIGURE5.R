@@ -2,13 +2,256 @@
 #### CODE USED TO GENERATE FIGURE 5
 ############################################################################################################################
 
-# FIGURE 5A Chordiagram HAP
+# FIGURE 5A
 
-#Run MAASLIN2 on RPKM counts of HAP-associated contigs/NO HAP associated contigs with relative abundance of the core respiratory bacteriome
+library(pheatmap)
+matrix <- read.delim("RPKMcounts.txt", header = TRUE, sep = "\t", row.names = 1)
+matrix <- na.omit(matrix)
+transformed_matrix <- log10(matrix+1)
+my_sample_col <- read.table("metadata.txt", header = TRUE, sep = "\t",row.names = 1)
+
+family_sums <- rowSums(transformed_matrix)
+top10_families <- names(sort(family_sums, decreasing = TRUE))[1:10]
+matrix_top10 <- transformed_matrix[top10_families, ]
+
+
+ALR_heatmap <- pheatmap(
+  matrix_top10,
+  color=colorRampPalette(c("navy", "white", "firebrick3"))(50),
+  annotation_col = my_sample_col,
+  cluster_cols = TRUE,
+  cluster_rows = TRUE,
+  fontsize = 20,
+  fontsize_row = 30,
+  legend = TRUE,
+  display_numbers = F,
+  annotation_legend = TRUE, show_colnames = FALSE, show_rownames = T
+)
+pdf("ALR_heatmap_prevhap.pdf",width=20,height=14);
+ALR_heatmap
+dev.off()
+
+# FIGURE 5B - Fisher HAP/no HAP contigs
+
+#Use Fisher test to identify discriminant contigs in HAP and no HAP signature 6 days before the HAP onset.
+#Input table : Presence absence counts
+
+otu_data <- read.delim("RPKM_NEW_WTA_deconta_B_50_01.txt", header = TRUE)
+
+for (n in 1:nrow(otu_data)){
+  otu_data_2<-otu_data[n,-1]
+  otu_data_3<-rbind(otu_data_2,apply(otu_data[-n,-1],2,FUN=sum))
+  otu_data$p.value[n]<-fisher.test(otu_data_3)$p.value
+}
+
+library(ggplot2)
+
+data <- read.delim("fisher_output.txt")
+
+HAP_noHAP_signature_contigs <- ggplot(data, aes(reorder(OTU, PVAL), PVAL, fill = CLASS)) +
+  geom_bar(stat = "identity", width = 0.8, size = 0.3) +
+  coord_flip() +
+  theme_bw() +
+  scale_fill_manual(values = c("Caudoviricetes" = "pink2","Other bacteriophages" ="#ffcc00", "Unclassified viruses" = "grey")) +
+  theme(strip.placement = "outside",
+                     strip.text.y = element_text(angle = 0)) +
+  labs(title = "", x = "Significant contigs", y = "Fisher test -log10(P-Value)")+
+  theme_classic() +
+  theme(panel.background = element_rect(fill = "white"),
+        strip.background = element_blank(),
+        strip.text = element_text(size=30),
+        legend.title = element_blank(),
+        axis.text.y = element_blank(),
+        axis.title.y = element_text(size = 30),
+        axis.title.x = element_text(size = 30),
+        axis.text.x = element_text(size = 30),
+        plot.title = element_blank(),
+        legend.text = element_text(size = 30),
+        legend.position = "bottom") + facet_wrap(~GROUP)
+
+
+pdf("HAP_noHAP_signature_Fisher_PREVHAP.pdf",width=16,height=11);
+HAP_noHAP_signature_contigs
+dev.off()
+
+
+# FIGURE 5C - Lefse HAP contigs
+
+#Use LEfSe to identify discriminant contigs in the HAP signature 6 days before the HAP onset.
+#Input table : ALR/Presence absence counts
+
+#In shell, run :
+#format_input.py Contig_ALR_HAP.txt HAP_lefse_input.in -c 1 -u 2 -o 1000000
+#run_lefse.py HAP_lefse_input.in HAP_lefse_output.res
+
+
+library(ggplot2)
+
+data <- read.delim("rpkm.res")
+
+HAP_signature_contigs <- ggplot(data, aes(reorder(Taxon, LDA), LDA, fill = CLASS)) +
+  geom_bar(stat = "identity", width = 0.7, size = 0.5) +
+  coord_flip() +
+  theme_bw()  +
+  scale_fill_manual(values = c("Caudoviricetes" = "pink2","Other bacteriophages" ="#ffcc00", "Unclassified viruses" = "grey")) +
+  theme(strip.placement = "outside",
+        strip.text.y = element_text(angle = 0)) +
+  labs(title = "LEfSe of contigs in HAP signature", x = "Differential abundant contigs", y = "LDA score (Log10)")+
+  theme_classic() +
+  theme(panel.background = element_rect(fill = "white"),
+        strip.background = element_blank(),
+        strip.text = element_text(size=30),
+        legend.title = element_blank(),
+        axis.text.y = element_blank(),
+        axis.title.y = element_text(size = 30),
+        axis.title.x = element_text(size = 30),
+        axis.text.x = element_text(size = 30),
+        plot.title = element_blank(),
+        legend.text = element_text(size = 30),
+        legend.position = "bottom")
+
+
+pdf("HAP_signature_contigs_LDA_PREVH.pdf",width=16,height=11);
+HAP_signature_contigs
+dev.off()
+
+# FIGURE 5D - Phage lifestyle Barplot
+
+#### Vibrant results
+
+
+library(ggplot2)
+
+# Define the data
+data <- data.frame(
+  Sample = c("IBIS", "PREVHAP", "IBIS", "PREVHAP"),
+  Virus = c("Lytic", "Lytic", "Lysogenic", "Lysogenic"),
+  Value = c(2911, 1385, 93, 67),
+  Percent= c(96.9, 95.4, 3.1, 4.6)
+)
+
+# Define custom virus colors
+style_colors <- c("Lytic" = "magenta2", "Lysogenic" = "yellow3")
+
+# Create the plot
+plot <- ggplot(data, aes(fill = Virus, y = Percent, x = Sample)) +
+  geom_bar(position = "stack", stat = "identity") +
+  scale_fill_manual(values = style_colors) +
+  labs(x = "Cohort",
+       y = "Percentage (%)") +
+  theme_classic() +
+  geom_col(colour = "black", stat = "identity") +
+  geom_text(aes(label = Value), position = position_stack(vjust = 0.5), size = 20, color = "black") +
+  theme(legend.text = element_text(size = 40),
+        legend.position = "bottom",
+        legend.title = element_blank(),
+        axis.title.y = element_text(size = 40),
+        axis.title.x = element_text(size = 40),
+        axis.title = element_text(size = 40),
+        axis.text.y = element_text(face = "bold", size = 40)) +
+  theme(axis.text.x = element_text(face = "bold", size = 40, colour = "black"))
+
+# Print the plot
+print(plot)
+
+
+pdf("Vibrant.pdf",width=15,height=20);
+plot
+dev.off()
+
+# FIGURE 5E - Caudoviricetes relative abundance in the sliding window 5-3 days before HAP onset
+
+library(ggplot2)
+library(tidyverse)
+library(rstatix)
+library(ggpubr)
+
+data <- read.delim("CAUDO_53_tracheo.txt", stringsAsFactors = FALSE)
+head(data)
+
+data %>% sample_n_by(GROUP, size = 2)
+data %>%
+  group_by(GROUP) %>%
+  get_summary_stats(Caudoviricetes, type = "median_iqr")
+
+stat.test <- data %>% 
+  wilcox_test(Caudoviricetes ~ GROUP) %>%
+  add_significance()
+stat.test
+data %>% wilcox_effsize(Caudoviricetes ~ GROUP)
+stat.test <- stat.test %>% add_xy_position(x = "GROUP")
+
+Caudoviricetes_boxplot <- ggplot(data, aes(reorder(GROUP, GROUP, function(x) -sum(x == "Upcoming HAP")), Caudoviricetes)) +
+  geom_boxplot(aes(fill = GROUP), width = 2, color = "black", outlier.shape = NA) +  # Boxplot inside violin, adjust width here
+  scale_fill_manual(values = c("Upcoming HAP" = "pink", "NO HAP" = "blue"), name = "GROUP") +  # Exclude black from legend
+  stat_pvalue_manual(stat.test, tip.length = 0, size = 10, y.position = 100, bracket.size = 2) +
+  labs(subtitle = get_test_label(stat.test, detailed = TRUE), y = "Caudoviricetes at 5-3 period
+  before HAP onset (Relative abundance)") +
+  theme_classic() +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_text(size = 30),
+        axis.text.x = element_text(size = 30, colour = "black", face = "bold"),
+        axis.text.y = element_text(size = 30),
+        plot.subtitle = element_text(size = 30),
+        legend.text = element_text(size = 30),
+        legend.position = "none")
+
+
+pdf("Caudoviricetes_boxplot_53_tracheo.pdf",width=12,height=9);
+Caudoviricetes_boxplot
+dev.off()
+
+
+# FIGURE 5F - Discriminant Caudoviricetes relative abundance in the sliding window 5-3 days before HAP onset
+
+
+library(ggplot2)
+library(tidyverse)
+library(rstatix)
+library(ggpubr)
+
+data <- read.delim("Caudo_53_lda_fish_tracheo.txt", stringsAsFactors = FALSE)
+head(data)
+
+data %>% sample_n_by(GROUP, size = 2)
+data %>%
+  group_by(GROUP) %>%
+  get_summary_stats(Caudoviricetes, type = "median_iqr")
+
+stat.test <- data %>% 
+  wilcox_test(Caudoviricetes ~ GROUP) %>%
+  add_significance()
+stat.test
+data %>% wilcox_effsize(Caudoviricetes ~ GROUP)
+stat.test <- stat.test %>% add_xy_position(x = "GROUP")
+
+Caudoviricetes_discriminant_boxplot <- ggplot(data, aes(reorder(GROUP, GROUP, function(x) -sum(x == "Upcoming HAP")), Caudoviricetes)) +
+  geom_boxplot(aes(fill = GROUP), width = 2, color = "black", outlier.shape = NA) +  # Boxplot inside violin, adjust width here
+  scale_fill_manual(values = c("Upcoming HAP" = "pink", "NO HAP" = "blue"), name = "GROUP") +  # Exclude black from legend
+  stat_pvalue_manual(stat.test, tip.length = 0, size = 10, y.position = 25, bracket.size = 2) +
+  labs(subtitle = get_test_label(stat.test, detailed = TRUE), y = "Discriminant Caudoviricetes at 5-3 period
+  before HAP onset (Relative abundance)") +
+  theme_classic() +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_text(size = 30),
+        axis.text.x = element_text(size = 30, colour = "black", face = "bold"),
+        axis.text.y = element_text(size = 30),
+        plot.subtitle = element_text(size = 30),
+        legend.text = element_text(size = 30),
+        legend.position = "none")
+
+
+pdf("Caudoviricetes_discriminant_boxplot_53_tracheo.pdf",width=12,height=9);
+Caudoviricetes_discriminant_boxplot
+dev.off()
+
+# FIGURE 5G Chordiagram HAP
+
+#Run MAASLIN2 on RPKM counts of HAP-associated contigs with relative abundance of the core respiratory bacteriome
 
 library(Maaslin2)
 
-df_input_data = read.table(file = "RPKMcounts_associated_HAP/NO HAP.txt",
+df_input_data = read.table(file = "RPKMcounts_HAP_associated.txt",
                           header = TRUE,
                           sep              = "\t", 
                           row.names        = 1,
@@ -40,13 +283,13 @@ library(scales)
 library(reshape)
 
 grid.col = c(Fusobacterium = "red", Haemophilus = "orange", Prevotella = "green", Streptococcus = "blue", Veillonella = "purple")
-col_fun = colorRamp2(c(-50, -1 ,0, 1, 50), c("red", "pink", "white", "lightblue","blue"))
+col_fun = colorRamp2(c(-10,-5,0, 5, 10), c("red", "pink", "white", "lightblue","blue"))
 
 pdf("chordDiagram_HAP.pdf",width=20,height=20)
 chordDiagram(data, big.gap = 10, symmetric = TRUE, annotationTrack = c("grid","name"), col = col_fun, grid.col = grid.col, scale = FALSE)
 dev.off()
 
-# FIGURE 5B Chordiagram NO HAP
+# FIGURE 5H Chordiagram NO HAP
 
 data <- read.delim("Correlations_viral_Core_Bacteriome_NOHAP.txt", header = TRUE, stringsAsFactors = FALSE)
 
@@ -56,103 +299,23 @@ library(scales)
 library(reshape)
 
 grid.col = c(Fusobacterium = "red", Haemophilus = "orange", Prevotella = "green", Streptococcus = "blue", Veillonella = "purple")
-col_fun = colorRamp2(c(-50, -1 ,0, 1, 50), c("red", "pink", "white", "lightblue","blue"))
+col_fun = colorRamp2(c(0,0.2,0.4), c("white", "lightblue","blue"))
 
 pdf("chordDiagram_noHAP.pdf",width=20,height=20)
 chordDiagram(data, big.gap = 10, symmetric = TRUE, annotationTrack = c("grid","name"), col = col_fun, grid.col = grid.col, scale = FALSE)
 dev.off()
 
 
-# FIGURE 5C - Dynamics Weighted Unifrac Distance (WUF) in 16S (We used 16s data from Montassier et al., Nat Med. 2023;29(11):2793-2804)
-
-#Calculate Unifrac distance :
-
-library(phyloseq)
-library(ggplot2)
-library(ape)
-
-otu = read.delim(file="16S_count.txt",header=T,row.names=1,check.names=F) 
-tax = read.delim(file="taxonomy.txt",header=T,row.names=1,check.names=F)
-metadata = read.delim(file="metadata.txt",header=T,row.names=1,check.names=F)
-
-colnames(tax) = c(
-  "Superkingdom",
-  "Phylum",
-  "Class"	,
-  "Order"	,
-  "Family",
-  "Genus"	,
-  "Species",
-  "Strain")
-
-OTU = otu_table(as.matrix(otu), taxa_are_rows = TRUE)
-TAX = tax_table(as.matrix(tax))
-physeq = phyloseq(OTU, TAX)
-physeq = merge_phyloseq(physeq, sample_data(meta))
-random_tree = rtree(ntaxa(physeq), rooted=TRUE, tip.label=taxa_names(physeq))
-physeq1 = merge_phyloseq(physeq, sampledata, random_tree)
-dis<- UniFrac(physeq1, weighted=TRUE, normalized=TRUE, parallel=FALSE, fast=TRUE)
-write.table(dis,"WeightedUnifrac.txt", sep = '\t')
-
-#Plot Unifrac dynamics :
-
-data <- read.delim("WUF_dynamics.txt", stringsAsFactors = FALSE)
-
-custom_colors <- c("HAP" = "red", "NO_HAP" = "blue")
-
-WUF_dynamics <- ggplot(data, aes(x = DAY, y = WUF, group = GROUP, color = GROUP)) +
-  geom_line() +
-  geom_point(shape=20, size=10) +
-  geom_ribbon(aes(ymin = LowerCI, ymax = UpperCI, fill = GROUP), alpha = 0.4) +
-  scale_color_manual(values = custom_colors) +
-  scale_fill_manual(values = custom_colors) +
-  scale_x_continuous(breaks = seq(-4,3)) +  
-  theme_classic() +
-  theme(
-    panel.background = element_rect(fill = "white"),
-    axis.title.x = element_text(size = 30),
-    axis.title.y = element_text(size = 30),
-    axis.text.x = element_text(size = 30),
-    axis.text.y = element_text(size = 25),
-    legend.text = element_text(size=25),
-    legend.title = element_blank()
-  ) +  
-  labs(x = "Days before HAP onset (Sliding window 2d)", y = "Weighted Unifrac Distance")
 
 
-WUF_dynamics_stat <- WUF_dynamics + scale_y_continuous(breaks = c(0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1)) +scale_x_continuous(breaks = c(1, 2, 3, 4), labels = c("5-3", "4-2", "3-1", "2-0"))+
-  geom_text(data = data, aes(x = DAY, y = 0.5, label = ifelse(Pvalue < 0.0001, "****", ifelse(Pvalue < 0.001, "***", ifelse(Pvalue < 0.01, "**", ifelse(Pvalue < 0.05, "*", "ns"))))), color = "black", size = 16, vjust = -17.3)
-
-pdf("WUF_dynamics.pdf",width=15,height=10);
-WUF_dynamics_stat
-dev.off()
-
-# FIGURE 5D - Core respiratory bacteriome relative abundance 
-
-library(ggplot2)
-
-data <- read.delim("Core_bacteriome_relative_abundance.txt")
 
 
-loessPlot <- ggplot(data, aes(x = time, y = Value, color = Bacteria)) +
-  geom_point() +
-  stat_smooth(method = "loess", formula = y ~ x, aes(fill = Bacteria), alpha = 0.3) + 
-  scale_x_continuous(breaks = c(-6, -5, -4, -3, -2, -1, 0)) +  
-  theme_classic() +
-  facet_grid(~GROUP, scales = "free") +
-  theme(
-    axis.text = element_text(size = 20),        
-    axis.title = element_text(size = 20),     
-    legend.text = element_text(size = 20),     
-    legend.title = element_blank(),     
-    strip.text = element_text(size = 20)        
-  ) +
-  xlab("Days before HAP onset") + 
-  ylab("Respiratory Core Microbiome Relative abundance (%)") +
-  coord_cartesian(ylim = c(0, NA)) 
 
-loessPlot
 
-pdf("loessPlot_Core_bacteriome_relab_ibis.pdf",width=15,height=10);
-loessPlot
-dev.off()
+
+
+
+
+
+
+##############################################################
