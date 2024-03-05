@@ -2,52 +2,197 @@
 #### CODE USED TO GENERATE FIGURE 2
 ############################################################################################################################
 
-# NMDS FIGURE 2A - NMDS HAP/noHAP
+# Alphadiv metrics :
 
 library(vegan)
-library(tidyverse)
-library(ggplot2)
 
-set.seed(1)
-data1<-read.delim("RPKMcounts.txt", row.names = 1)
-dataTransposed1<-t(data1)
-dist.1 <- vegdist(dataTransposed1, method = "bray")
-metadata <- read.delim("metadata.txt")
+data<-read.delim("RPKMcounts.txt", row.names = 1)
+dataTransposed<-t(data)
+Shannon<-diversity(dataTransposed, index = 'shannon')
+write.table(Shannon,"ShannonDiversity.txt", sep = '\t')
 
-ano = anosim(dataTransposed1, metadata$HAP_condition, distance = "bray", permutations = 9999)
-ano
-plot(ano)
+dataTransposed<-t(data)
+richness <- specnumber(meio.data) 
+write.table(richness,"Richness.txt", sep = '\t')
 
-nmds = metaMDS(dataTransposed1, distance = "bray")
-nmds
-plot(nmds)
+# Alphadiv FIGURE 2A - Alphadiv HAP/noHAP
+
+#Loess plot - Shannon index
+
+data<-read.delim("ShannonDiversity_over_time.txt", row.names = 1)
+custom_colors <- c("HAP" = "#CC0033", "NO_HAP" = "#0000FF")
 
 
-ta.scores = as.data.frame(scores(nmds)$sites)
-metadata$HAP_condition = metadata$HAP_condition
+Shannon_loessPlot <- ggplot(data, aes(x = HAP_onset, y = Shannon, color = HAP_condition, group = HAP_condition)) +
+  geom_point(shape =20, size=7) +
+  scale_y_continuous(breaks = c(0,2,4,6)
+  )+
+  stat_smooth(metho1 = "loess", formula = y ~ x, aes(fill = HAP_condition), alpha = 0.3) +
+  scale_x_continuous(breaks = c(-6, -4, -2, 0, 2, 4, 6, 8, 10, 12, 14)) +
+  scale_color_manual(values = custom_colors) + 
+  scale_fill_manual(values = custom_colors) +  
+  theme_classic() +
+  theme(
+    axis.text = element_text(size = 20),    
+    axis.title = element_text(size = 20),       
+    legend.text = element_text(size = 20),   
+    legend.title = element_blank()     
+  ) +
+  xlab("Days before and after HAP onset") +  
+  ylab("Shannon index")   
 
-NMDS_HAP_noHAP = ggplot(metadata, aes(x = ta.scores$NMDS1, y = ta.scores$NMDS2)) + 
-  geom_point(aes(size = Richness, colour = HAP_condition))+ 
-  theme(axis.text.y = element_text(colour = "black", size = 12, face = "bold"), 
-        axis.text.x = element_text(colour = "black", face = "bold", size = 12), 
-        legend.text = element_text(size = 12, face ="bold", colour ="black"), 
-        legend.position = "right", axis.title.y = element_text(face = "bold", size = 14), 
-        axis.title.x = element_text(face = "bold", size = 14, colour = "black"), 
-        legend.title = element_text(size = 14, colour = "black", face = "bold"), 
-        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA, size = 1.2),
-        legend.key=element_blank()) + 
-  labs(x = "NMDS1", colour = "HAP_condition", y = "NMDS2", shape = "Type")  + 
-  scale_colour_manual(values = c("RED", "BLUE","pink")) + stat_ellipse(geom = "polygon", aes(group = HAP_condition, color = HAP_condition, fill = HAP_condition), alpha = 0.05) +
-  annotate("text", x = -2, y = 7, label = paste0("Stress: ", format(nmds$stress, digits = 4)), hjust = 3) +
-  annotate("text", x = -2, y = 6, label = paste0("P=", format(ano$signif, digits = 4)), hjust = 4.5)
 
-NMDS_HAP_noHAP
+Shannon_loessPlot
 
-pdf("NMDS_HAP_noHAP.pdf",width=10,height=5);
-NMDS_HAP_noHAP
+pdf("Shannon_loessPlot.pdf",width=12,height=8);
+Shannon_loessPlot
 dev.off()
 
-# PCOA FIGURE 2B - PCOA HAP/noHAP
+#Dot plot - Shannon
+
+data<-read.delim("ShannonDiversity_over_time.txt", row.names = 1)
+data %>% sample_n_by(GROUP, size = 2)
+data %>%
+  group_by(GROUP) %>%
+  get_summary_stats(Shannon, type = "median_iqr")
+stat.test <- data %>% 
+  wilcox_test(Shannon ~ GROUP) %>%
+  add_significance()
+stat.test
+data %>% wilcox_effsize(Shannon ~ GROUP)
+
+summary_stats <- data %>%
+  group_by(GROUP) %>%
+  summarise(median = median(Shannon),
+            p25 = quantile(Shannon, 0.25),
+            p75 = quantile(Shannon, 0.75))
+
+
+Shannon_dotplot <- ggplot(data, aes(GROUP, Shannon)) +
+  geom_dotplot(method = "histodot", binaxis = "y", stackratio = 1,stackdir = "center", binpositions="all", binwidth = 0.2, dotsize = 1, aes(fill = GROUP, stroke = GROUP)) +
+  scale_fill_manual(values = c("NO_HAP" = "blue", "HAP" = "red")) +
+  stat_pvalue_manual(stat.test, tip.length = 0, size = 10, y.position = 7, bracket.size = 2) +
+  labs(subtitle = get_test_label(stat.test, detailed = TRUE), y = "Shannon") +
+  labs(subtitle = get_test_label(stat.test, detailed = TRUE), y = "Shannon") +
+  theme_classic()+
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_text(size = 20),
+        axis.text.x = element_text(size = 20),
+        axis.text.y = element_text(size = 20),
+        plot.subtitle = element_text(size = 20),
+        legend.text = element_text(size = 20), legend.position = "none") +
+  labs(
+    subtitle = get_test_label(stat.test, detailed = FALSE),
+    y = "Shannon index"
+  ) +
+  labs(
+    subtitle = get_test_label(stat.test, detailed = FALSE),
+    y = "Shannon index"
+  )
+Shannon_dotplot
+
+pdf("Shannon_dotplot.pdf",width=12,height=8);
+Shannon_dotplot
+dev.off()
+
+#compile loess and dot plot
+
+top_shannon <- plot_grid(Shannon_loessPlot, Shannon_dotplot, ncol=2, rel_widths=c(1, 0.4))
+top_shannon
+
+pdf("Shannon_compiled.pdf",width=12,height=8);
+top_shannon
+dev.off()
+
+# Alphadiv FIGURE 2B - Alphadiv HAP/noHAP
+
+#Loess plot - Richness
+data<-read.delim("Richness_over_time.txt", row.names = 1)
+custom_colors <- c("HAP" = "#CC0033", "NO_HAP" = "#0000FF")
+
+Richness_loessPlot <- ggplot(data, aes(x = HAP_onset, y = Richness, color = HAP_condition, group = HAP_condition)) +
+  geom_point(shape =20, size=7) +
+  scale_y_continuous(breaks = c(0,500,1000,1500,2000)
+  )+
+  stat_smooth(metho1 = "loess", formula = y ~ x, aes(fill = HAP_condition), alpha = 0.3) +
+  scale_x_continuous(breaks = c(-6, -4, -2, 0, 2, 4, 6, 8, 10, 12, 14)) +
+  scale_color_manual(values = custom_colors) +  
+  scale_fill_manual(values = custom_colors) + 
+  theme_classic() +
+  theme(
+    axis.text = element_text(size = 20), 
+    axis.title = element_text(size = 20),      
+    legend.text = element_text(size = 20),    
+    legend.title = element_blank()     
+  ) +
+  xlab("Days before and after HAP onset") + 
+  ylab("Richness")
+
+
+Richness_loessPlot
+
+pdf("Richness_loessPlot.pdf",width=12,height=8);
+Richness_loessPlot
+dev.off()
+
+#Dot plot - Richness
+
+data<-read.delim("Richness_over_time.txt", row.names = 1)
+data %>% sample_n_by(GROUP, size = 2)
+data %>%
+  group_by(GROUP) %>%
+  get_summary_stats(Richness, type = "median_iqr")
+stat.test <- data %>% 
+  wilcox_test(Richness ~ GROUP) %>%
+  add_significance()
+stat.test
+data %>% wilcox_effsize(Richness ~ GROUP)
+
+summary_stats <- data %>%
+  group_by(GROUP) %>%
+  summarise(median = median(Richness),
+            p25 = quantile(Richness, 0.25),
+            p75 = quantile(Richness, 0.75))
+
+
+Richness_dotplot <- ggplot(data, aes(GROUP, Richness)) +
+  geom_dotplot(method = "histodot", binaxis = "y", stackratio = 1,stackdir = "center", binpositions="all", binwidth = 80, dotsize = 1, aes(fill = GROUP, stroke = GROUP)) +
+  scale_fill_manual(values = c("NO_HAP" = "blue", "HAP" = "red")) + 
+  stat_pvalue_manual(stat.test, tip.length = 0, size = 10, y.position = 3000, bracket.size = 2) +
+  labs(subtitle = get_test_label(stat.test, detailed = TRUE), y = "Richness") +
+  labs(subtitle = get_test_label(stat.test, detailed = TRUE), y = "Richness") +
+  theme_classic()+
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_text(size = 20),
+        axis.text.x = element_text(size = 20),
+        axis.text.y = element_text(size = 20),
+        plot.subtitle = element_text(size = 20),
+        legend.text = element_text(size = 20), legend.position = "none") +
+  labs(
+    subtitle = get_test_label(stat.test, detailed = FALSE),
+    y = "Richness"
+  ) +
+  labs(
+    subtitle = get_test_label(stat.test, detailed = FALSE),
+    y = "Richness"
+  )
+Richness_dotplot
+
+pdf("Richness_dotplot.pdf",width=12,height=8);
+Richness_dotplot
+dev.off()
+
+#compile loess and dot plot
+
+top_richness <- plot_grid(Richness_loessPlot, Richness_dotplot, ncol=2, rel_widths=c(1, 0.4))
+top_richness
+
+pdf("Richness_compiled.pdf",width=12,height=8);
+top_richness
+dev.off()
+
+
+# PCOA FIGURE 2C - PCOA HAP/noHAP
 
 (We followed the PCOA scripts from Montassier et al., Nat Med. 2023;29(11):2793-2804.)
 
@@ -134,176 +279,55 @@ pdf("PCOA_HAP_noHAP.pdf",width=7,height=3.5);
 together2
 dev.off()
 
-# Alphadiv metrics :
+# NMDS FIGURE 2D - NMDS HAP/noHAP
 
 library(vegan)
+library(tidyverse)
+library(ggplot2)
 
-data<-read.delim("RPKMcounts.txt", row.names = 1)
-dataTransposed<-t(data)
-Shannon<-diversity(dataTransposed, index = 'shannon')
-write.table(Shannon,"ShannonDiversity.txt", sep = '\t')
+set.seed(1)
+data1<-read.delim("RPKMcounts.txt", row.names = 1)
+dataTransposed1<-t(data1)
+dist.1 <- vegdist(dataTransposed1, method = "bray")
+metadata <- read.delim("metadata.txt")
 
-dataTransposed<-t(data)
-richness <- specnumber(meio.data) 
-write.table(richness,"Richness.txt", sep = '\t')
+ano = anosim(dataTransposed1, metadata$HAP_condition, distance = "bray", permutations = 9999)
+ano
+plot(ano)
 
-# Alphadiv FIGURE 2C - Alphadiv HAP/noHAP
-
-#Loess plot - Richness
-data<-read.delim("Richness_over_time.txt", row.names = 1)
-custom_colors <- c("HAP" = "#CC0033", "NO_HAP" = "#0000FF")
-
-Richness_loessPlot <- ggplot(data, aes(x = HAP_onset, y = Richness, color = HAP_condition, group = HAP_condition)) +
-  geom_point(shape =20, size=7) +
-  scale_y_continuous(breaks = c(0,500,1000,1500,2000)
-  )+
-  stat_smooth(metho1 = "loess", formula = y ~ x, aes(fill = HAP_condition), alpha = 0.3) +
-  scale_x_continuous(breaks = c(-6, -4, -2, 0, 2, 4, 6, 8, 10, 12, 14)) +
-  scale_color_manual(values = custom_colors) +  
-  scale_fill_manual(values = custom_colors) + 
-  theme_classic() +
-  theme(
-    axis.text = element_text(size = 20), 
-    axis.title = element_text(size = 20),      
-    legend.text = element_text(size = 20),    
-    legend.title = element_blank()     
-  ) +
-  xlab("Days before and after HAP onset") + 
-  ylab("Richness")
+nmds = metaMDS(dataTransposed1, distance = "bray")
+nmds
+plot(nmds)
 
 
-Richness_loessPlot
+ta.scores = as.data.frame(scores(nmds)$sites)
+metadata$HAP_condition = metadata$HAP_condition
 
-pdf("Richness_loessPlot.pdf",width=12,height=8);
-Richness_loessPlot
+NMDS_HAP_noHAP = ggplot(metadata, aes(x = ta.scores$NMDS1, y = ta.scores$NMDS2)) + 
+  geom_point(aes(size = 10, colour = GROUP), alpha = 0.3)+ 
+  theme(axis.text.y = element_text(colour = "black", size = 12, face = "bold"), 
+        axis.text.x = element_text(colour = "black", face = "bold", size = 12), 
+        legend.text = element_text(size = 12, face ="bold", colour ="black"), 
+        legend.position = "right", axis.title.y = element_text(face = "bold", size = 14), 
+        axis.title.x = element_text(face = "bold", size = 14, colour = "black"), 
+        legend.title = element_text(size = 14, colour = "black", face = "bold"), 
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA, size = 1.2),
+        legend.key=element_blank()) + 
+  labs(x = "NMDS1", colour = "GROUP", y = "NMDS2", shape = "Type")  + 
+  scale_colour_manual(values = c("RED", "BLUE","pink")) + stat_ellipse(geom = "polygon", aes(group = GROUP, color = GROUP, fill = GROUP), alpha = 0.05) +
+  annotate("text", x = -2, y = 7, label = paste0("Stress: ", format(nmds$stress, digits = 4)), hjust = 2) +
+  annotate("text", x = -2, y = 6, label = paste0("P=", format(ano$signif, digits = 4)), hjust = 3) +
+  scale_x_continuous(breaks = c(-6,-3,0, 3, 6)) +
+  scale_y_continuous(breaks = c(-6,-3,0, 3, 6))
+
+NMDS_HAP_noHAP
+
+pdf("NMDS_HAP_noHAP.pdf",width=10,height=5);
+NMDS_HAP_noHAP
 dev.off()
 
-#Dot plot - Richness
 
-data<-read.delim("Richness_over_time.txt", row.names = 1)
-data %>% sample_n_by(GROUP, size = 2)
-data %>%
-  group_by(GROUP) %>%
-  get_summary_stats(Richness, type = "median_iqr")
-stat.test <- data %>% 
-  wilcox_test(Richness ~ GROUP) %>%
-  add_significance()
-stat.test
-data %>% wilcox_effsize(Richness ~ GROUP)
-
-summary_stats <- data %>%
-  group_by(GROUP) %>%
-  summarise(median = median(Richness),
-            p25 = quantile(Richness, 0.25),
-            p75 = quantile(Richness, 0.75))
-
-
-Richness_dotplot <- ggplot(data, aes(GROUP, Richness)) +
-  geom_dotplot(method = "histodot", binaxis = "y", stackratio = 1,stackdir = "center", binpositions="all", binwidth = 80, dotsize = 1, aes(fill = GROUP, stroke = GROUP)) +
-  scale_fill_manual(values = c("NO_HAP" = "blue", "HAP" = "red")) + 
-  stat_pvalue_manual(stat.test, tip.length = 0, size = 10, y.position = 3000, bracket.size = 2) +
-  labs(subtitle = get_test_label(stat.test, detailed = TRUE), y = "Richness") +
-  labs(subtitle = get_test_label(stat.test, detailed = TRUE), y = "Richness") +
-  theme_classic()+
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_text(size = 20),
-        axis.text.x = element_text(size = 20),
-        axis.text.y = element_text(size = 20),
-        plot.subtitle = element_text(size = 20),
-        legend.text = element_text(size = 20), legend.position = "none") +
-  labs(
-    subtitle = get_test_label(stat.test, detailed = FALSE),
-    y = "Richness"
-  ) +
-  labs(
-    subtitle = get_test_label(stat.test, detailed = FALSE),
-    y = "Richness"
-  )
-Richness_dotplot
-
-pdf("Richness_dotplot.pdf",width=12,height=8);
-Richness_dotplot
-dev.off()
-
-#Loess plot - Shannon index
-
-data<-read.delim("ShannonDiversity_over_time.txt", row.names = 1)
-custom_colors <- c("HAP" = "#CC0033", "NO_HAP" = "#0000FF")
-
-
-Shannon_loessPlot <- ggplot(data, aes(x = HAP_onset, y = Shannon, color = HAP_condition, group = HAP_condition)) +
-  geom_point(shape =20, size=7) +
-  scale_y_continuous(breaks = c(0,2,4,6)
-  )+
-  stat_smooth(metho1 = "loess", formula = y ~ x, aes(fill = HAP_condition), alpha = 0.3) +
-  scale_x_continuous(breaks = c(-6, -4, -2, 0, 2, 4, 6, 8, 10, 12, 14)) +
-  scale_color_manual(values = custom_colors) + 
-  scale_fill_manual(values = custom_colors) +  
-  theme_classic() +
-  theme(
-    axis.text = element_text(size = 20),    
-    axis.title = element_text(size = 20),       
-    legend.text = element_text(size = 20),   
-    legend.title = element_blank()     
-  ) +
-  xlab("Days before and after HAP onset") +  
-  ylab("Shannon index")   
-
-
-Shannon_loessPlot
-
-pdf("Shannon_loessPlot.pdf",width=12,height=8);
-Shannon_loessPlot
-dev.off()
-
-#Dot plot - Shannon
-
-data<-read.delim("ShannonDiversity_over_time.txt", row.names = 1)
-data %>% sample_n_by(GROUP, size = 2)
-data %>%
-  group_by(GROUP) %>%
-  get_summary_stats(Shannon, type = "median_iqr")
-stat.test <- data %>% 
-  wilcox_test(Shannon ~ GROUP) %>%
-  add_significance()
-stat.test
-data %>% wilcox_effsize(Shannon ~ GROUP)
-
-summary_stats <- data %>%
-  group_by(GROUP) %>%
-  summarise(median = median(Shannon),
-            p25 = quantile(Shannon, 0.25),
-            p75 = quantile(Shannon, 0.75))
-
-
-Shannon_dotplot <- ggplot(data, aes(GROUP, Shannon)) +
-  geom_dotplot(method = "histodot", binaxis = "y", stackratio = 1,stackdir = "center", binpositions="all", binwidth = 0.2, dotsize = 1, aes(fill = GROUP, stroke = GROUP)) +
-  scale_fill_manual(values = c("NO_HAP" = "blue", "HAP" = "red")) +
-  stat_pvalue_manual(stat.test, tip.length = 0, size = 10, y.position = 7, bracket.size = 2) +
-  labs(subtitle = get_test_label(stat.test, detailed = TRUE), y = "Shannon") +
-  labs(subtitle = get_test_label(stat.test, detailed = TRUE), y = "Shannon") +
-  theme_classic()+
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_text(size = 20),
-        axis.text.x = element_text(size = 20),
-        axis.text.y = element_text(size = 20),
-        plot.subtitle = element_text(size = 20),
-        legend.text = element_text(size = 20), legend.position = "none") +
-  labs(
-    subtitle = get_test_label(stat.test, detailed = FALSE),
-    y = "Shannon index"
-  ) +
-  labs(
-    subtitle = get_test_label(stat.test, detailed = FALSE),
-    y = "Shannon index"
-  )
-Shannon_dotplot
-
-pdf("Shannon_dotplot.pdf",width=12,height=8);
-Shannon_dotplot
-dev.off()
-
-# FIGURE 2D - WBC
+# FIGURE 2E - WBC
 
 library(ggplot2)
 library(tidyverse)
@@ -348,7 +372,7 @@ pdf("WBC_Between_violin_HAP_noHAP.pdf",width=12,height=9);
 WBC_Between_violin_HAP_noHAP
 dev.off()
 
-# FIGURE 2D - Hellinger
+# FIGURE 2E - Hellinger
 
 library(ggplot2)
 library(tidyverse)
@@ -393,7 +417,7 @@ pdf("Hellinger_Between_violin_HAP_noHAP.pdf",width=12,height=9);
 Hellinger_Between_violin_HAP_noHAP
 dev.off()
 
-# FIGURE 2D - Sorensen
+# FIGURE 2E - Sorensen
 
 library(ggplot2)
 library(tidyverse)
