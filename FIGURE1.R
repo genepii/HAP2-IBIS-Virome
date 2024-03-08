@@ -61,6 +61,27 @@ dis <- vegdist(dataTransposed3, method = "bray")
 dis2<-as.matrix(dis)
 write.table(dis2,"Sorensen.txt", sep = '\t')
 
+# Reformat Betadiv superimposed Output table (BRAY CURTIS, HELLINGER and Sorensen)
+
+library(reshape2)
+
+data <- read.delim("Betadiv_superimposed_matrix.txt", stringsAsFactors = FALSE, row.names = 1, header = TRUE, check.names = FALSE)
+
+superimposed_matrix <- as.matrix(data)
+upper_logical <- upper.tri(superimposed_matrix)
+upper_triangle_subset <- matrix(NA, nrow = nrow(superimposed_matrix), ncol = ncol(superimposed_matrix))
+upper_triangle_subset[upper_logical] <- superimposed_matrix[upper_logical]
+row_names <- row.names(data)
+col_names <- colnames(data)
+rownames(upper_triangle_subset) <- row_names
+colnames(upper_triangle_subset) <- col_names
+print(upper_triangle_subset)
+
+# Reshape the data into a vertical table format
+melted_data <- melt(upper_triangle_subset, id.vars = "sample1", variable.name = "sample2", value.name = "value")
+colnames(melted_data) <- c("sample1", "sample2", "value")
+write.table(melted_data, file="Formated_betadiv_table.txt", sep = "\t")
+
 
 ***(the input file of betadiversity analysis contain the metric medians calculated between patients or within patients)***
 	- Between analysis : we calculated the median of distance between each patient with others
