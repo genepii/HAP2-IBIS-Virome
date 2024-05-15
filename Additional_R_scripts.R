@@ -80,70 +80,139 @@ dev.off()
 
 # Supplementary FIGURE 3
 
-# Relab heatmap
+#Loess plot - Shannon index
 
-library(pheatmap)
-matrix <- read.delim("Relab_31.txt", header = TRUE, sep = "\t", row.names = 1)
-matrix <- na.omit(matrix)
-transformed_matrix <- log10(matrix+1)
-my_sample_col <- read.table("meta.txt", header = TRUE, sep = "\t",row.names = 1)
+data<-read.delim("ShannonDiversity_over_time.txt", row.names = 1)
+custom_colors <- c("HAP" = "#CC0033", "NO_HAP" = "#0000FF")
 
 
-ann_colors = list(
-  Group = c("Upcoming HAP" = "pink", "NO HAP" = "blue")
-)
+Shannon_loessPlot <- ggplot(data, aes(x = HAP_onset, y = Shannon, color = HAP_condition, group = HAP_condition)) +
+  geom_point(shape =20, size=7) +
+  scale_y_continuous(breaks = c(0,2,4,6)
+  )+
+  stat_smooth(metho1 = "loess", formula = y ~ x, aes(fill = HAP_condition), alpha = 0.3) +
+  scale_x_continuous(breaks = c(-6, -4, -2, 0, 2, 4, 6, 8, 10, 12, 14)) +
+  scale_color_manual(values = custom_colors) + 
+  scale_fill_manual(values = custom_colors) +  
+  theme_classic() +
+  theme(
+    axis.text = element_text(size = 20),    
+    axis.title = element_text(size = 20),       
+    legend.text = element_text(size = 20),   
+    legend.title = element_blank()     
+  ) +
+  xlab("Days before and after HAP onset") +  
+  ylab("Shannon index")   
 
-RELAB_heatmap <- pheatmap(
-  matrix,
-  color=colorRampPalette(c("white", "black"))(100),
-  annotation_col = my_sample_col,
-  cluster_cols = T,
-  cluster_rows = T,
-  annotation_colors = ann_colors,
-  clustering_method = "ward.D2",
-  fontsize = 15,
-  fontsize_row = 15,
-  legend = TRUE,
-  display_numbers = F,
-  annotation_legend = TRUE, show_colnames = F, show_rownames = T
-)
 
-pdf("RELAB_heatmap.pdf",width=10,height=7.5);
-RELAB_heatmap
+Shannon_loessPlot
+
+pdf("Shannon_loessPlot.pdf",width=12,height=8);
+Shannon_loessPlot
 dev.off()
+
+
 
 # Supplementary FIGURE 4
 
-library(pheatmap)
-matrix <- read.delim("RPKM.txt", header = TRUE, sep = "\t", row.names = 1)
-matrix <- na.omit(matrix)
-transformed_matrix <- log10(matrix+0.01)
-my_sample_col <- read.table("meta.txt", header = TRUE, sep = "\t",row.names = 1)
+#Loess plot - Richness
 
-ann_colors = list(
-  Group = c("Upcoming HAP" = "pink", "NO HAP" = "blue")
-)
+data<-read.delim("Richness_over_time.txt", row.names = 1)
+custom_colors <- c("HAP" = "#CC0033", "NO_HAP" = "#0000FF")
 
-ALR_heatmap <- pheatmap(
-  transformed_matrix,
-  color=colorRampPalette(c("white", "black"))(100),
-  annotation_col = my_sample_col,
-  cluster_cols = T,
-  cluster_rows = T,
-  annotation_colors = ann_colors,
-  fontsize = 15,
-  fontsize_row = 15,
-  legend = TRUE,
-  display_numbers = F,
-  annotation_legend = TRUE, show_colnames = F, show_rownames = T
-)
+Richness_loessPlot <- ggplot(data, aes(x = HAP_onset, y = Richness, color = HAP_condition, group = HAP_condition)) +
+  geom_point(shape =20, size=7) +
+  scale_y_continuous(breaks = c(0,500,1000,1500,2000)
+  )+
+  stat_smooth(metho1 = "loess", formula = y ~ x, aes(fill = HAP_condition), alpha = 0.3) +
+  scale_x_continuous(breaks = c(-6, -4, -2, 0, 2, 4, 6, 8, 10, 12, 14)) +
+  scale_color_manual(values = custom_colors) +  
+  scale_fill_manual(values = custom_colors) + 
+  theme_classic() +
+  theme(
+    axis.text = element_text(size = 20), 
+    axis.title = element_text(size = 20),      
+    legend.text = element_text(size = 20),    
+    legend.title = element_blank()     
+  ) +
+  xlab("Days before and after HAP onset") + 
+  ylab("Richness")
 
-pdf("ALR_heatmap.pdf",width=10,height=7.5);
-RPKM_heatmap
+
+Richness_loessPlot
+
+pdf("Richness_loessPlot.pdf",width=12,height=8);
+Richness_loessPlot
 dev.off()
 
 
 # Supplementary FIGURE 5
+
+#Loess plot - Shannon index
+
+data<-read.delim("IBIS_clinical_final_Upcoming_noHAP.txt", row.names = 1)
+custom_colors <- c("Upcoming_HAP" = "pink", "NO_HAP" = "#0000FF")
+
+# loess with custom colors
+Shannon_loessPlot <- ggplot(data, aes(x = HAP_onset, y = Shannon, color = GROUP, group = GROUP)) +
+  geom_point(shape =20, size=7) +
+  scale_y_continuous(breaks = c(0,1,2,3,4,5))+
+  stat_smooth(metho1 = "loess", formula = y ~ x, aes(fill = GROUP), alpha = 0.3) +
+  scale_x_continuous(breaks = c(-6,-5, -4, -3,-2,-1)) +
+  scale_color_manual(values = custom_colors) +  # Add custom colors for points
+  scale_fill_manual(values = custom_colors) +   # Add custom colors for stat_smooth
+  theme_classic() +
+  theme(
+    axis.text = element_text(size = 20),        # Adjust size of axis text
+    axis.title = element_text(size = 20),       # Adjust size of axis titles
+    legend.text = element_text(size = 20),      # Adjust size of legend text
+    legend.title = element_blank()      # Adjust size of legend title
+  ) +
+  xlab("Days relative to HAP onset") +  # Add or modify the x-axis label
+  ylab("Shannon index")    # Add or modify the y-axis label
+
+
+Shannon_loessPlot
+
+pdf("Shannon_loessPlot_up.pdf",width=12,height=8);
+Shannon_loessPlot
+dev.off()
+
+# Supplementary FIGURE 6
+
+#Loess plot - Richness
+data<-read.delim("IBIS_clinical_final_Upcoming_noHAP.txt", row.names = 1)
+custom_colors <- c("Upcoming_HAP" = "pink", "NO_HAP" = "#0000FF")
+
+# loess with custom colors
+Richness_loessPlot <- ggplot(data, aes(x = HAP_onset, y = Richness, color = GROUP, group = GROUP)) +
+  geom_point(shape =20, size=7) +
+  scale_y_continuous(breaks = c(0,500,1000,1500,2000,2500,3000)
+  )+
+  stat_smooth(metho1 = "lm", formula = y ~ x, aes(fill = GROUP), alpha = 0.3) +
+  scale_x_continuous(breaks = c(-6,-5, -4, -3,-2,-1)) +
+  scale_color_manual(values = custom_colors) +  # Add custom colors for points
+  scale_fill_manual(values = custom_colors) +   # Add custom colors for stat_smooth
+  theme_classic() +
+  theme(
+    axis.text = element_text(size = 20),        # Adjust size of axis text
+    axis.title = element_text(size = 20),       # Adjust size of axis titles
+    legend.text = element_text(size = 20),      # Adjust size of legend text
+    legend.title = element_blank()      # Adjust size of legend title
+  ) +
+  xlab("Days relative to HAP onset") +  # Add or modify the x-axis label
+  ylab("Richness")    # Add or modify the y-axis label
+
+
+Richness_loessPlot
+
+pdf("Richness_loessPlot_up.pdf",width=12,height=8);
+Richness_loessPlot
+dev.off()
+
+
+
+# Supplementary FIGURE 7
 
 Dynamics Weighted Unifrac Distance (WUF) in 16S (We used 16s data from Montassier et al., Nat Med. 2023;29(11):2793-2804)
 
@@ -209,39 +278,7 @@ pdf("WUF_dynamics.pdf",width=15,height=10);
 WUF_dynamics_stat
 dev.off()
 
-# Supplementary FIGURE 6
-
-Core respiratory bacteriome relative abundance 
-
-library(ggplot2)
-
-data <- read.delim("Core_bacteriome_relative_abundance.txt")
-
-
-loessPlot <- ggplot(data, aes(x = time, y = Value, color = Bacteria)) +
-  geom_point() +
-  stat_smooth(method = "loess", formula = y ~ x, aes(fill = Bacteria), alpha = 0.3) + 
-  scale_x_continuous(breaks = c(-6, -5, -4, -3, -2, -1, 0)) +  
-  theme_classic() +
-  facet_grid(~GROUP, scales = "free") +
-  theme(
-    axis.text = element_text(size = 20),        
-    axis.title = element_text(size = 20),     
-    legend.text = element_text(size = 20),     
-    legend.title = element_blank(),     
-    strip.text = element_text(size = 20)        
-  ) +
-  xlab("Days before HAP onset") + 
-  ylab("Respiratory Core Microbiome Relative abundance (%)") +
-  coord_cartesian(ylim = c(0, NA)) 
-
-loessPlot
-
-pdf("loessPlot_Core_bacteriome_relab_ibis.pdf",width=15,height=10);
-loessPlot
-dev.off()
-
-# Supplementary FIGURE 7
+# Supplementary FIGURE 8
 
 
 library(ggplot2)
@@ -288,7 +325,7 @@ pdf("RELAB_heatmap_prevhap.pdf",width=20,height=15);
 RELAB_heatmap_prevhap
 dev.off()
 
-# Supplementary FIGURE 8
+# Supplementary FIGURE 9
 
 #wbc boxplot
 
@@ -331,7 +368,7 @@ pdf("WBC_boxplot.pdf",width=12,height=9);
 WBC_boxplot
 dev.off()
 
-# hellinger box
+# hellinger boxplot
 
 library(ggplot2)
 library(tidyverse)
@@ -375,7 +412,7 @@ pdf("Hellinger_boxplot.pdf",width=12,height=9);
 Hellinger_boxplot
 dev.off()
 
-#sorensen box 
+#sorensen boxplot 
 
 library(ggplot2)
 library(tidyverse)
@@ -416,100 +453,4 @@ pdf("Sorensen_boxplot.pdf",width=12,height=9);
 Sorensen_boxplot
 dev.off()
 
-# Supplementary FIGURE 9
-
-library(pheatmap)
-
-matrix <- read.delim("Fisher_prevhap.txt", header = TRUE, sep = "\t", row.names = 1)
-matrix <- na.omit(matrix)
-my_sample_col <- read.table("meta.txt", header = TRUE, sep = "\t",row.names = 1)
-
-
-ann_colors = list(
-  Group = c("Upcoming HAP" = "pink", "NO HAP" = "blue")
-)
-
-Heatmap_2_contigs <- pheatmap(
-  matrix,
-  annotation_colors = ann_colors,
-  color=colorRampPalette(c("white","black"))(2),
-  legend_breaks = c(0, 1),
-  legend_labels = c("Absent", "Present"),
-  cluster_cols = TRUE,
-  cluster_rows = TRUE,
-  annotation_col = my_sample_col,
-  clustering_distance_cols = "maximum",
-  legend = TRUE, 
-  fontsize = 20,
-  annotation_legend = TRUE, show_colnames = F, show_rownames = T, fontsize_row = 15,
-  clustering_method = "ward.D2"
-)
-
-pdf("Heatmap_Fisher_prevhap.pdf",width=20,height=15);
-Heatmap_2_contigs
-dev.off()
-
-# Supplementary FIGURE 10
-
-
-library(pheatmap)
-
-matrix <- read.delim("RPKM_LDA_prevhap.txt", header = TRUE, sep = "\t", row.names = 1)
-matrix <- na.omit(matrix)
-my_sample_col <- read.table("meta.txt", header = TRUE, sep = "\t",row.names = 1)
-transformed_matrix <- log10(matrix+0.01)
-
-ann_colors = list(
-  Group = c("Upcoming HAP" = "pink", "NO HAP" = "blue")
-)
-
-Heatmap_2_contigs <- pheatmap(
-  transformed_matrix,
-  annotation_colors = ann_colors,
-  color=colorRampPalette(c("white","black"))(100),
-  cluster_cols = TRUE,
-  cluster_rows = TRUE,
-  annotation_col = my_sample_col,
-  clustering_distance_cols = "maximum",
-  legend = TRUE,
-  fontsize = 20,
-  annotation_legend = TRUE, show_colnames = F, show_rownames = T, fontsize_row = 15,
-  clustering_method = "ward.D2"
-)
-
-pdf("Heatmap_LDA_prevhap.pdf",width=20,height=15);
-Heatmap_2_contigs
-dev.off()
-
-# Supplementary FIGURE 11
-
-library(ggplot2)
-
-data <- read.delim("hap_nohap_core_bact_prevhap.txt")
-data$GROUP <- factor(data$GROUP, levels = c("Upcoming HAP", "NO HAP"))
-
-loessPlot <- ggplot(data, aes(x = time, y = Value, color = Bacteria)) +
-  geom_point() +
-  stat_smooth(method = "loess", formula = y ~ x, aes(fill = Bacteria), alpha = 0.3) + 
-  scale_x_continuous(breaks = c(-6, -5, -4, -3, -2, -1, 0)) + 
-  theme_classic() +
-  facet_grid(Bacteria~GROUP, scales = "free") +
-  theme(
-    axis.text = element_text(size = 20),  
-    axis.title = element_text(size = 20),    
-    legend.text = element_text(size = 20),     
-    legend.title = element_blank(),    
-    strip.text = element_text(size = 16)   
-  ) +
-  xlab("Days before HAP onset") +  
-  ylab("Respiratory Core Microbiome Relative abundance (%)") +
-  coord_cartesian(ylim = c(0, NA))  
-
-loessPlot
-
-pdf("loessPlot_Core_bacteriome_relab_prevhap.pdf",width=15,height=12);
-loessPlot
-dev.off()
-
-
-
+############################################################################################################################################################
