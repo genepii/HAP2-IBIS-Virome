@@ -5,7 +5,7 @@
 # ALR heatmap FIGURE 1A
 
 library(pheatmap)
-matrix <- read.delim("RPKMcounts.txt", header = TRUE, sep = "\t", row.names = 1)
+matrix <- read.delim("counts.txt", header = TRUE, sep = "\t", row.names = 1)
 matrix <- na.omit(matrix)
 transformed_matrix <- log(matrix+0.01)
 my_sample_col <- read.table("metadata.txt", header = TRUE, sep = "\t",row.names = 1)
@@ -83,7 +83,7 @@ dev.off()
 # BRAY CURTIS
 
 library(vegan)
-data1<-read.delim("RPKMcounts.txt", row.names = 1)
+data1<-read.delim("counts.txt", row.names = 1)
 dataTransposed1<-t(data1)
 dis <- vegdist(dataTransposed1, method = "bray")
 dis2<-as.matrix(dis)

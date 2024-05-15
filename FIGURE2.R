@@ -6,7 +6,7 @@
 
 library(vegan)
 
-data<-read.delim("RPKMcounts.txt", row.names = 1)
+data<-read.delim("counts.txt", row.names = 1)
 dataTransposed<-t(data)
 Shannon<-diversity(dataTransposed, index = 'shannon')
 write.table(Shannon,"ShannonDiversity.txt", sep = '\t')
@@ -120,7 +120,7 @@ dev.off()
 
 (We followed the PCOA scripts from Montassier et al., Nat Med. 2023;29(11):2793-2804.)
 
-data1<-read.delim("RPKMcounts.txt", row.names = 1)
+data1<-read.delim("counts.txt", row.names = 1)
 x<-t(data1)
 m <- read.delim("metadata.txt",row.names = 1)
 library(ggplot2)
@@ -210,7 +210,7 @@ library(tidyverse)
 library(ggplot2)
 
 set.seed(1)
-data1<-read.delim("RPKMcounts.txt", row.names = 1)
+data1<-read.delim("counts.txt", row.names = 1)
 dataTransposed1<-t(data1)
 dist.1 <- vegdist(dataTransposed1, method = "bray")
 metadata <- read.delim("metadata.txt")

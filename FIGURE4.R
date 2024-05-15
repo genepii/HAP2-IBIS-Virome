@@ -166,7 +166,7 @@ dev.off()
 #Use Fisher test to identify discriminant contigs in HAP and no HAP signature 6 days before the HAP onset.
 #Input table : Presence absence counts
 
-otu_data <- read.delim("RPKM_NEW_WTA_deconta_B_50_01.txt", header = TRUE)
+otu_data <- read.delim("otu.txt", header = TRUE)
 
 for (n in 1:nrow(otu_data)){
   otu_data_2<-otu_data[n,-1]
@@ -247,11 +247,11 @@ dev.off()
 
 # FIGURE 4E Chordiagram HAP
 
-#Run MAASLIN2 on RPKM counts of HAP-associated contigs with relative abundance of the core respiratory bacteriome
+#Run MAASLIN2 on  counts of HAP-associated contigs with relative abundance of the core respiratory bacteriome
 
 library(Maaslin2)
 
-df_input_data = read.table(file = "RPKMcounts_HAP_associated.txt",
+df_input_data = read.table(file = "counts_HAP_associated.txt",
                           header = TRUE,
                           sep              = "\t", 
                           row.names        = 1,

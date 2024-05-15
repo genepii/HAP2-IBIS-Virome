@@ -1,4 +1,4 @@
-#### Metagenomics reads processing and filtering ###
+#### Metatranscriptomic reads processing and filtering ###
 
 #1 Interleave
 

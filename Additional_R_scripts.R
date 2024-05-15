@@ -6,7 +6,7 @@
 
 library(vegan)
 set.seed(1)
-data1<-read.delim("RPKMcounts.txt", row.names = 1)
+data1<-read.delim("counts.txt", row.names = 1)
 dataTransposed1<-t(data1)
 dist.1 <- vegdist(dataTransposed1, method = "bray")
 metadata <- read.delim("metadata.txt")

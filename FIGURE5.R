@@ -5,7 +5,7 @@
 # FIGURE 5A
 
 library(pheatmap)
-matrix <- read.delim("RPKMcounts.txt", header = TRUE, sep = "\t", row.names = 1)
+matrix <- read.delim("counts.txt", header = TRUE, sep = "\t", row.names = 1)
 matrix <- na.omit(matrix)
 transformed_matrix <- log10(matrix+0.01)
 my_sample_col <- read.table("metadata.txt", header = TRUE, sep = "\t",row.names = 1)
@@ -36,7 +36,7 @@ dev.off()
 #Use Fisher test to identify discriminant contigs in HAP and no HAP signature 6 days before the HAP onset.
 #Input table : Presence absence counts
 
-otu_data <- read.delim("RPKM_NEW_WTA_deconta_B_50_01.txt", header = TRUE)
+otu_data <- read.delim("count.txt", header = TRUE)
 
 for (n in 1:nrow(otu_data)){
   otu_data_2<-otu_data[n,-1]
@@ -87,7 +87,7 @@ dev.off()
 
 library(ggplot2)
 
-data <- read.delim("rpkm.res")
+data <- read.delim("count.res")
 
 HAP_signature_contigs <- ggplot(data, aes(reorder(Taxon, LDA), LDA, fill = CLASS)) +
   geom_bar(stat = "identity", width = 0.7, size = 0.5) +
@@ -252,11 +252,11 @@ dev.off()
 
 # FIGURE 5G Chordiagram HAP
 
-#Run MAASLIN2 on RPKM counts of HAP-associated contigs with relative abundance of the core respiratory bacteriome
+#Run MAASLIN2 on counts of HAP-associated contigs with relative abundance of the core respiratory bacteriome
 
 library(Maaslin2)
 
-df_input_data = read.table(file = "RPKMcounts_HAP_associated.txt",
+df_input_data = read.table(file = "counts_HAP_associated.txt",
                           header = TRUE,
                           sep              = "\t", 
                           row.names        = 1,
