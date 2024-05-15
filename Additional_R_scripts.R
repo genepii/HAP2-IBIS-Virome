@@ -214,7 +214,7 @@ dev.off()
 
 # Supplementary FIGURE 7
 
-Dynamics Weighted Unifrac Distance (WUF) in 16S (We used 16s data from Montassier et al., Nat Med. 2023;29(11):2793-2804)
+Dynamics Weighted Unifrac Distance (WUF) in 16S rRNA (We used 16S rRNA data from Montassier et al., Nat Med. 2023;29(11):2793-2804)
 
 #Calculate Unifrac distance :
 
