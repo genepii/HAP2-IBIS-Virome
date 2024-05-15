@@ -1,8 +1,8 @@
-#### Remapping concatenated reads on contigs ### 
+#### Remapping concatenated reads on vOTUs ### 
 
 (we followed the mapping protocol from: Kaelin et al., Nat Microbiol. 2022 May;7(5):653-662)
 
-# 1) remap concatenated reads on contigs
+# 1) remap concatenated reads on vOTUs
 
 mkdir mapping
 mkdir count
@@ -11,9 +11,9 @@ input_fastq="concatenated_reads"
 
 while IFS= read -r sampleId; do
 singularity exec /seqmet/singularity/denovo.sif \
-bwa index all_viral_contigs.fasta
+bwa index vOTUs.fasta
 singularity exec /seqmet/singularity/denovo.sif \
-bwa mem -t 100 -M -L 97,97 all_viral_contigs.fasta ${input_fastq}/${sampleId}_R1.fastq ${input_fastq}/${sampleId}_R2.fastq > mapping/${sampleId}-readsMapped.sam;
+bwa mem -t 100 -M -L 97,97 vOTUs.fasta ${input_fastq}/${sampleId}_R1.fastq ${input_fastq}/${sampleId}_R2.fastq > mapping/${sampleId}-readsMapped.sam;
 singularity exec /seqmet/singularity/denovo.sif \
 samtools view -@ 30 -h -F 0x900 mapping/${sampleId}-readsMapped.sam > mapping/${sampleId}-secondaryRemoved.sam;
 singularity exec /seqmet/singularity/denovo.sif \

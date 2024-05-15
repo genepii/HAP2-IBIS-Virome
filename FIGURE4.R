@@ -161,9 +161,9 @@ pdf("Caudoviricetes_dynamics.pdf",width=15,height=10);
 Caudoviricetes_dynamics_stat
 dev.off()
 
-# FIGURE 4C - Fisher HAP/no HAP contigs
+# FIGURE 4C - Fisher HAP/no HAP vOTUs
 
-#Use Fisher test to identify discriminant contigs in HAP and no HAP signature 6 days before the HAP onset.
+#Use Fisher test to identify discriminant vOTUs in HAP and no HAP signature 6 days before the HAP onset.
 #Input table : Presence absence counts
 
 otu_data <- read.delim("otu.txt", header = TRUE)
@@ -179,14 +179,14 @@ library(ggplot2)
 
 data <- read.delim("HAP_noHAP_fisher_output.txt")
 
-HAP_noHAP_specific_contigs <- ggplot(data, aes(reorder(OTU, PVAL), PVAL, fill = CLASS)) +
+HAP_noHAP_specific_vOTUs <- ggplot(data, aes(reorder(OTU, PVAL), PVAL, fill = CLASS)) +
   geom_bar(stat = "identity", width = 0.8, size = 0.3) +
   coord_flip() +
   theme_bw() +
   scale_fill_manual(values = c("Caudoviricetes" = "pink2","Other bacteriophages" ="#ffcc00", "Unclassified viruses" = "grey", "Eukaryotic viruses" = "red")) +
   theme(strip.placement = "outside",
         strip.text.y = element_text(angle = 0)) +
-  labs(title = "", x = "Significant contigs", y = "Fisher test -log10(P-Value)")+
+  labs(title = "", x = "Significant vOTUs", y = "Fisher test -log10(P-Value)")+
   theme_classic() +
   theme(panel.background = element_rect(fill = "white"),
         strip.background = element_blank(),
@@ -201,17 +201,17 @@ HAP_noHAP_specific_contigs <- ggplot(data, aes(reorder(OTU, PVAL), PVAL, fill = 
         legend.position = "bottom") + facet_wrap(~GROUP)
 
 
-pdf("HAP_noHAP_signature_contigs_fisher.pdf",width=16,height=11);
-HAP_noHAP_specific_contigs
+pdf("HAP_noHAP_signature_vOTUs_fisher.pdf",width=16,height=11);
+HAP_noHAP_specific_vOTUs
 dev.off()
 
-# FIGURE 4D - Lefse HAP contigs
+# FIGURE 4D - Lefse HAP vOTUs
 
-#Use LEfSe to identify discriminant contigs in the HAP signature 6 days before the HAP onset.
+#Use LEfSe to identify discriminant vOTUs in the HAP signature 6 days before the HAP onset.
 #Input table : ALR/Presence absence counts
 
 #In shell, run :
-#format_input.py Contig_ALR_HAP.txt HAP_lefse_input.in -c 1 -u 2 -o 1000000
+#format_input.py vOTUs_ALR_HAP.txt HAP_lefse_input.in -c 1 -u 2 -o 1000000
 #run_lefse.py HAP_lefse_input.in HAP_lefse_output.res
 
 
@@ -219,14 +219,14 @@ library(ggplot2)
 
 data <- read.delim("LDA_hapnohap.res")
 
-HAP_discriminant_contigs <- ggplot(data, aes(reorder(Taxon, LDA), LDA, fill = CLASS)) +
+HAP_discriminant_vOTUs <- ggplot(data, aes(reorder(Taxon, LDA), LDA, fill = CLASS)) +
   geom_bar(stat = "identity", width = 0.7, size = 0.5) +
   coord_flip() +
   theme_bw() +
   scale_fill_manual(values = c("Caudoviricetes" = "pink2","Other bacteriophages" ="#ffcc00", "Unclassified viruses" = "grey")) +
   theme(strip.placement = "outside",
         strip.text.y = element_text(angle = 0)) +
-  labs(title = "LEfSe of contigs in HAP signature", x = "Differentially abundant contigs", y = "LDA score (Log10)")+
+  labs(title = "LEfSe of vOTUs in HAP signature", x = "Differentially abundant vOTUs", y = "LDA score (Log10)")+
   theme_classic() +
   theme(panel.background = element_rect(fill = "white"),
         strip.background = element_blank(),
@@ -242,12 +242,12 @@ HAP_discriminant_contigs <- ggplot(data, aes(reorder(Taxon, LDA), LDA, fill = CL
 
 
 pdf("HAP_lefse_output.pdf",width=16,height=11);
-HAP_discriminant_contigs
+HAP_discriminant_vOTUs
 dev.off()
 
 # FIGURE 4E Chordiagram HAP
 
-#Run MAASLIN2 on  counts of HAP-associated contigs with relative abundance of the core respiratory bacteriome
+#Run MAASLIN2 on  counts of HAP-associated vOTUs with relative abundance of the core respiratory bacteriome
 
 library(Maaslin2)
 
@@ -267,7 +267,7 @@ df_input_metadata = read.table(file = "16S_Core_respiratory_bacteriome.txt",
 fitData.ctrls.lefse= Maaslin2(
   input_data = df_input_data, 
   input_metadata = df_input_metadata,
-  output = "Correlations_between_viral_contigs_and_core_bacteriome",
+  output = "Correlations_between_viral_vOTUs_and_core_bacteriome",
   normalization = "none",
   transform = "none",
   random_effects = c("Samples"))

@@ -33,10 +33,10 @@ dev.off()
 
 # FIGURE 1B - Phages lifestyles
 
-#VIBRANT to predict lifestyles (lysogenic/lytic) for contigs with minimum sequence length of 1000bp and containing at least 4 ORFs (open readings frames) 
+#VIBRANT to predict lifestyles (lysogenic/lytic) for vOTUs with minimum sequence length of 1000bp and containing at least 4 ORFs (open readings frames) 
 
 singularity shell vibrant.sif
-VIBRANT_run.py -i viral_contigs.fasta -t 114 -folder VIBRANT_results -virome
+VIBRANT_run.py -i vOTUs.fasta -t 114 -folder VIBRANT_results -virome
 
 library(ggplot2)
 
