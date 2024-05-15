@@ -119,6 +119,10 @@ dev.off()
 
 #### Vibrant results
 
+#VIBRANT to predict lifestyles (lysogenic/lytic) for contigs with minimum sequence length of 1000bp and containing at least 4 ORFs (open readings frames) 
+
+singularity shell vibrant.sif
+VIBRANT_run.py -i viral_contigs.fasta -t 114 -folder VIBRANT_results -virome
 
 library(ggplot2)
 
@@ -126,12 +130,12 @@ library(ggplot2)
 data <- data.frame(
   Sample = c("IBIS", "PREVHAP", "IBIS", "PREVHAP"),
   Virus = c("Lytic", "Lytic", "Lysogenic", "Lysogenic"),
-  Value = c(2911, 1385, 93, 67),
-  Percent= c(96.9, 95.4, 3.1, 4.6)
+  Value = c(2582, 1385, 93, 67),
+  Percent= c(96.3, 95.4, 3.7, 4.6)
 )
 
 # Define custom virus colors
-style_colors <- c("Lytic" = "magenta2", "Lysogenic" = "yellow3")
+style_colors <- c("Lytic" = "wheat1", "Lysogenic" = "orange3")
 
 # Create the plot
 plot <- ggplot(data, aes(fill = Virus, y = Percent, x = Sample)) +
@@ -158,6 +162,7 @@ print(plot)
 pdf("Vibrant.pdf",width=15,height=20);
 plot
 dev.off()
+
 
 # FIGURE 5E - Caudoviricetes relative abundance in the sliding window 5-3 days before HAP onset
 

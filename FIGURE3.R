@@ -52,78 +52,9 @@ pdf("Shannon_dotplot_upcoming_noHAP.pdf",width=12,height=8);
 Shannon_dotplot_upcoming_noHAP
 dev.off()
 
-#Loess plot - Shannon index
-
-data<-read.delim("IBIS_clinical_final_Upcoming_noHAP.txt", row.names = 1)
-custom_colors <- c("Upcoming_HAP" = "pink", "NO_HAP" = "#0000FF")
-
-# loess with custom colors
-Shannon_loessPlot <- ggplot(data, aes(x = HAP_onset, y = Shannon, color = GROUP, group = GROUP)) +
-  geom_point(shape =20, size=7) +
-  scale_y_continuous(breaks = c(0,1,2,3,4,5))+
-  stat_smooth(metho1 = "loess", formula = y ~ x, aes(fill = GROUP), alpha = 0.3) +
-  scale_x_continuous(breaks = c(-6,-5, -4, -3,-2,-1)) +
-  scale_color_manual(values = custom_colors) +  # Add custom colors for points
-  scale_fill_manual(values = custom_colors) +   # Add custom colors for stat_smooth
-  theme_classic() +
-  theme(
-    axis.text = element_text(size = 20),        # Adjust size of axis text
-    axis.title = element_text(size = 20),       # Adjust size of axis titles
-    legend.text = element_text(size = 20),      # Adjust size of legend text
-    legend.title = element_blank()      # Adjust size of legend title
-  ) +
-  xlab("Days relative to HAP onset") +  # Add or modify the x-axis label
-  ylab("Shannon index")    # Add or modify the y-axis label
-
-
-Shannon_loessPlot
-
-pdf("Shannon_loessPlot_up.pdf",width=12,height=8);
-Shannon_loessPlot
-dev.off()
-
-
-
-#compile loess and dot plot
-
-top_shannon <- plot_grid(Shannon_loessPlot, Shannon_dotplot_upcoming_noHAP, ncol=2, rel_widths=c(1, 0.4), align = "h")
-top_shannon
-
-pdf("Shannon_compiled_upcoming.pdf",width=12,height=8);
-top_shannon
-dev.off()
 
 # Alphadiv FIGURE 3B - Alphadiv Upcoming/noHAP
 
-#Loess plot - Richness
-data<-read.delim("IBIS_clinical_final_Upcoming_noHAP.txt", row.names = 1)
-custom_colors <- c("Upcoming_HAP" = "pink", "NO_HAP" = "#0000FF")
-
-# loess with custom colors
-Richness_loessPlot <- ggplot(data, aes(x = HAP_onset, y = Richness, color = GROUP, group = GROUP)) +
-  geom_point(shape =20, size=7) +
-  scale_y_continuous(breaks = c(0,500,1000,1500,2000,2500,3000)
-  )+
-  stat_smooth(metho1 = "lm", formula = y ~ x, aes(fill = GROUP), alpha = 0.3) +
-  scale_x_continuous(breaks = c(-6,-5, -4, -3,-2,-1)) +
-  scale_color_manual(values = custom_colors) +  # Add custom colors for points
-  scale_fill_manual(values = custom_colors) +   # Add custom colors for stat_smooth
-  theme_classic() +
-  theme(
-    axis.text = element_text(size = 20),        # Adjust size of axis text
-    axis.title = element_text(size = 20),       # Adjust size of axis titles
-    legend.text = element_text(size = 20),      # Adjust size of legend text
-    legend.title = element_blank()      # Adjust size of legend title
-  ) +
-  xlab("Days relative to HAP onset") +  # Add or modify the x-axis label
-  ylab("Richness")    # Add or modify the y-axis label
-
-
-Richness_loessPlot
-
-pdf("Richness_loessPlot_up.pdf",width=12,height=8);
-Richness_loessPlot
-dev.off()
 
 #Dot plot - Richness
 
@@ -170,16 +101,6 @@ Richness_dotplot_upcoming_noHAP
 
 pdf("Richness_dotplot_upcoming_noHAP.pdf",width=12,height=8);
 Richness_dotplot_upcoming_noHAP
-dev.off()
-
-
-#compile loess and dot plot
-
-top_richness <- plot_grid(Richness_loessPlot, Richness_dotplot_upcoming_noHAP, ncol=2, rel_widths=c(1, 0.4), align = "h")
-top_richness
-
-pdf("Richness_compiled_upcoming.pdf",width=12,height=8);
-top_richness
 dev.off()
 
 

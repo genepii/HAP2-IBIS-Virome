@@ -186,7 +186,7 @@ HAP_noHAP_specific_contigs <- ggplot(data, aes(reorder(OTU, PVAL), PVAL, fill = 
   scale_fill_manual(values = c("Caudoviricetes" = "pink2","Other bacteriophages" ="#ffcc00", "Unclassified viruses" = "grey", "Eukaryotic viruses" = "red")) +
   theme(strip.placement = "outside",
         strip.text.y = element_text(angle = 0)) +
-  labs(title = "", x = "Signicant contigs", y = "Fisher test -log10(adj. P Value)")+
+  labs(title = "", x = "Significant contigs", y = "Fisher test -log10(P-Value)")+
   theme_classic() +
   theme(panel.background = element_rect(fill = "white"),
         strip.background = element_blank(),
@@ -217,16 +217,16 @@ dev.off()
 
 library(ggplot2)
 
-data <- read.delim("HAP_lefse_output.res")
+data <- read.delim("LDA_hapnohap.res")
 
 HAP_discriminant_contigs <- ggplot(data, aes(reorder(Taxon, LDA), LDA, fill = CLASS)) +
   geom_bar(stat = "identity", width = 0.7, size = 0.5) +
   coord_flip() +
   theme_bw() +
-  scale_fill_manual(values = c("Caudoviricetes" = "pink2","Other bacteriophages" ="#ffcc00", "Unclassified viruses" = "grey") +
+  scale_fill_manual(values = c("Caudoviricetes" = "pink2","Other bacteriophages" ="#ffcc00", "Unclassified viruses" = "grey")) +
   theme(strip.placement = "outside",
         strip.text.y = element_text(angle = 0)) +
-  labs(title = "LEfSe of contigs in HAP signature", x = "Discriminant contigs", y = "LDA score (Log10)")+
+  labs(title = "LEfSe of contigs in HAP signature", x = "Differentially abundant contigs", y = "LDA score (Log10)")+
   theme_classic() +
   theme(panel.background = element_rect(fill = "white"),
         strip.background = element_blank(),

@@ -17,37 +17,6 @@ write.table(richness,"Richness.txt", sep = '\t')
 
 # Alphadiv FIGURE 2A - Alphadiv HAP/noHAP
 
-#Loess plot - Shannon index
-
-data<-read.delim("ShannonDiversity_over_time.txt", row.names = 1)
-custom_colors <- c("HAP" = "#CC0033", "NO_HAP" = "#0000FF")
-
-
-Shannon_loessPlot <- ggplot(data, aes(x = HAP_onset, y = Shannon, color = HAP_condition, group = HAP_condition)) +
-  geom_point(shape =20, size=7) +
-  scale_y_continuous(breaks = c(0,2,4,6)
-  )+
-  stat_smooth(metho1 = "loess", formula = y ~ x, aes(fill = HAP_condition), alpha = 0.3) +
-  scale_x_continuous(breaks = c(-6, -4, -2, 0, 2, 4, 6, 8, 10, 12, 14)) +
-  scale_color_manual(values = custom_colors) + 
-  scale_fill_manual(values = custom_colors) +  
-  theme_classic() +
-  theme(
-    axis.text = element_text(size = 20),    
-    axis.title = element_text(size = 20),       
-    legend.text = element_text(size = 20),   
-    legend.title = element_blank()     
-  ) +
-  xlab("Days before and after HAP onset") +  
-  ylab("Shannon index")   
-
-
-Shannon_loessPlot
-
-pdf("Shannon_loessPlot.pdf",width=12,height=8);
-Shannon_loessPlot
-dev.off()
-
 #Dot plot - Shannon
 
 data<-read.delim("ShannonDiversity_over_time.txt", row.names = 1)
@@ -95,45 +64,9 @@ pdf("Shannon_dotplot.pdf",width=12,height=8);
 Shannon_dotplot
 dev.off()
 
-#compile loess and dot plot
-
-top_shannon <- plot_grid(Shannon_loessPlot, Shannon_dotplot, ncol=2, rel_widths=c(1, 0.4))
-top_shannon
-
-pdf("Shannon_compiled.pdf",width=12,height=8);
-top_shannon
-dev.off()
 
 # Alphadiv FIGURE 2B - Alphadiv HAP/noHAP
 
-#Loess plot - Richness
-data<-read.delim("Richness_over_time.txt", row.names = 1)
-custom_colors <- c("HAP" = "#CC0033", "NO_HAP" = "#0000FF")
-
-Richness_loessPlot <- ggplot(data, aes(x = HAP_onset, y = Richness, color = HAP_condition, group = HAP_condition)) +
-  geom_point(shape =20, size=7) +
-  scale_y_continuous(breaks = c(0,500,1000,1500,2000)
-  )+
-  stat_smooth(metho1 = "loess", formula = y ~ x, aes(fill = HAP_condition), alpha = 0.3) +
-  scale_x_continuous(breaks = c(-6, -4, -2, 0, 2, 4, 6, 8, 10, 12, 14)) +
-  scale_color_manual(values = custom_colors) +  
-  scale_fill_manual(values = custom_colors) + 
-  theme_classic() +
-  theme(
-    axis.text = element_text(size = 20), 
-    axis.title = element_text(size = 20),      
-    legend.text = element_text(size = 20),    
-    legend.title = element_blank()     
-  ) +
-  xlab("Days before and after HAP onset") + 
-  ylab("Richness")
-
-
-Richness_loessPlot
-
-pdf("Richness_loessPlot.pdf",width=12,height=8);
-Richness_loessPlot
-dev.off()
 
 #Dot plot - Richness
 
@@ -180,15 +113,6 @@ Richness_dotplot
 
 pdf("Richness_dotplot.pdf",width=12,height=8);
 Richness_dotplot
-dev.off()
-
-#compile loess and dot plot
-
-top_richness <- plot_grid(Richness_loessPlot, Richness_dotplot, ncol=2, rel_widths=c(1, 0.4))
-top_richness
-
-pdf("Richness_compiled.pdf",width=12,height=8);
-top_richness
 dev.off()
 
 

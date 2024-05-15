@@ -31,6 +31,52 @@ pdf("ALR_heatmap.pdf",width=20,height=14);
 ALR_heatmap
 dev.off()
 
+# FIGURE 1B - Phages lifestyles
+
+#VIBRANT to predict lifestyles (lysogenic/lytic) for contigs with minimum sequence length of 1000bp and containing at least 4 ORFs (open readings frames) 
+
+singularity shell vibrant.sif
+VIBRANT_run.py -i viral_contigs.fasta -t 114 -folder VIBRANT_results -virome
+
+library(ggplot2)
+
+# Define the data
+data <- data.frame(
+  Sample = c("HAP", "NO HAP", "HAP", "NO HAP"),
+  Virus = c("Lytic", "Lytic", "Lysogenic", "Lysogenic"),
+  Value = c(1734, 1648, 74, 72),
+  Percent= c(95.9, 95.8, 4.1, 4.2)
+)
+
+# Define custom virus colors
+style_colors <- c("Lytic" = "wheat1", "Lysogenic" = "orange3")
+
+# Create the plot
+plot <- ggplot(data, aes(fill = Virus, y = Percent, x = Sample)) +
+  geom_bar(position = "stack", stat = "identity") +
+  scale_fill_manual(values = style_colors) +
+  labs(x = "",
+       y = "Percentage (%)") +
+  theme_classic() +
+  geom_col(colour = "black", stat = "identity") +
+  geom_text(aes(label = Value), position = position_stack(vjust = 0.5), size = 20, color = "black") +
+  theme(legend.text = element_text(size = 40),
+        legend.position = "bottom",
+        legend.title = element_blank(),
+        axis.title.y = element_text(size = 40),
+        axis.title.x = element_text(size = 40),
+        axis.title = element_text(size = 40),
+        axis.text.y = element_text(face = "bold", size = 40)) +
+  theme(axis.text.x = element_text(face = "bold", size = 40, colour = "black"))
+
+# Print the plot
+print(plot)
+
+pdf("Vibrant_IBIS.pdf",width=15,height=20);
+plot
+dev.off()
+
+# FIGURE 1C - BETADIVERSITY
 
 # BETADIV 
 
@@ -84,12 +130,12 @@ write.table(melted_data, file="Formated_betadiv_table.txt", sep = "\t")
 
 
 ***(the input file of betadiversity analysis contain the metric medians calculated between patients or within patients)***
-	- Between analysis : we calculated the median of distance between each patient with others
-	- Within analysis : we calculated the median of distance between samples collected at different times and belonging to the same patient 
+	- Inter/Between analysis : we calculated the median of distance between each patient with others
+	- Intra/Within analysis : we calculated the median of distance between samples collected at different times and belonging to the same patient 
 
 "Tables containing median values from WBC, Hellinger or Sorensen served as input for statistical and dynamics analysis"
 
-# FIGURE 1B - WBC
+# FIGURE 1C - WBC
 
 library(ggplot2)
 library(tidyverse)
@@ -135,7 +181,7 @@ WBC_Between_within_violin
 dev.off()
 
 
-# BETADIV FIGURE 1B - Hellinger
+# BETADIV FIGURE 1C  - Hellinger
 
 library(ggplot2)
 library(tidyverse)
@@ -182,7 +228,7 @@ dev.off()
 
 
 
-# BETADIV FIGURE 1B - Sorensen
+# BETADIV FIGURE 1C  - Sorensen
 
 library(ggplot2)
 library(tidyverse)

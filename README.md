@@ -1,6 +1,6 @@
 # HAP2-IBIS Virome
 
-All codes for: Anani et al, 2024.
+All codes for: Anani et al, 2024. Respiratory virome convergence toward bacteriophages precedes Hospital-Acquired Pneumonia in critically ill patients.
 
 Scripts shoud be run individually in independent orders.
 
