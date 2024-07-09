@@ -26,4 +26,6 @@ The scripts are detailed by figure
 -  Additional_shell_scripts
 -  Additional_R_scripts
 
+## Viral Metagenomics Pipeline
+
 ![image info](./documents/WORKFLOW-1.png)
