@@ -7,7 +7,7 @@
 mkdir mapping
 mkdir count
 
-input_fastq="concatenated_reads"
+input_fastq="filtered_reads"
 
 while IFS= read -r sampleId; do
 singularity exec /seqmet/singularity/denovo.sif \
@@ -36,7 +36,7 @@ done < "sampleID.txt"
 mkdir mapping_MS2
 mkdir count_ms2
 
-input_fastq="concatenated_reads"
+input_fastq="filtered_reads"
 
 while IFS= read -r sampleId; do
 singularity exec /seqmet/singularity/denovo.sif \
