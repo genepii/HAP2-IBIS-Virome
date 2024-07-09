@@ -105,7 +105,7 @@ mkdir krak2
 mkdir krak2/un
 
 input_directory="trimmed_reads_R1/R2.fastq"
-kraken2_db="seqmet/db/kraken2/hclvirdb_221121/"
+kraken2_db="/kraken2/"
 while IFS= read -r sample_id; do
     # Run the Kraken2 command for each sample ID
     singularity exec seqmet/singularity/denovo.sif \
@@ -145,7 +145,7 @@ while IFS= read -r sample_id; do
 
     # Run the extraction script with the appropriate arguments
     singularity exec /ananihu/krakentools.sif \
-    extract_kraken_reads.py --max 1000000000 -t 2 9443 -k "$input_out" -s "$input_fastq" -o "$output_fastq" -r "$input_tsv" --include-children --exclude --fastq-output
+    extract_kraken_reads.py --max 1000000000 -t 2 2759 4751 2157 -k "$input_out" -s "$input_fastq" -o "$output_fastq" -r "$input_tsv" --include-children --exclude --fastq-output
     echo "Extraction complete for sample: ${sample_id}"
 done < "sampleID.txt"
 
@@ -158,7 +158,7 @@ while IFS= read -r sample_id; do
 
     # Run the extraction script with the appropriate arguments
     singularity exec ananihu/krakentools.sif \
-    extract_kraken_reads.py --max 1000000000 -t 2 9443 -k "$input_out" -s "$input_fastq" -o "$output_fastq" -r "$input_tsv" --include-children --exclude --fastq-output
+    extract_kraken_reads.py --max 1000000000 -t 2 2759 4751 2157 -k "$input_out" -s "$input_fastq" -o "$output_fastq" -r "$input_tsv" --include-children --exclude --fastq-output
     echo "Extraction complete for sample: ${sample_id}"
 done < "sampleID.txt"
 
