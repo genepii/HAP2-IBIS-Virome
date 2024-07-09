@@ -25,3 +25,5 @@ The scripts are detailed by figure
 -  Clinical_table
 -  Additional_shell_scripts
 -  Additional_R_scripts
+
+![image info](./documents/WORKFLOW-1.png)
