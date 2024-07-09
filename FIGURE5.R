@@ -191,7 +191,7 @@ dev.off()
 #Input table : log10RPKM counts
 
 #In shell, run :
-#format_input.py vOTUs_ALR_HAP.txt HAP_lefse_input.in -c 1 -u 2 -o 1000000
+#format_input.py vOTUs_log10RPKM_HAP.txt HAP_lefse_input.in -c 1 -u 2 -o 1000000
 #run_lefse.py HAP_lefse_input.in HAP_lefse_output.res
 
 
