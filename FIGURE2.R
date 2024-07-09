@@ -6,20 +6,20 @@
 
 library(vegan)
 
-data<-read.delim("counts.txt", row.names = 1)
+data<-read.delim("RPKMcounts.txt", row.names = 1)
 dataTransposed<-t(data)
 Shannon<-diversity(dataTransposed, index = 'shannon')
 write.table(Shannon,"ShannonDiversity.txt", sep = '\t')
 
 dataTransposed<-t(data)
-richness <- specnumber(meio.data) 
+richness <- specnumber(dataTransposed) 
 write.table(richness,"Richness.txt", sep = '\t')
 
 # Alphadiv FIGURE 2A - Alphadiv HAP/noHAP
 
 #Dot plot - Shannon
 
-data<-read.delim("ShannonDiversity_over_time.txt", row.names = 1)
+data<-read.delim("diversity_metadata.txt", row.names = 1)
 data %>% sample_n_by(GROUP, size = 2)
 data %>%
   group_by(GROUP) %>%
@@ -45,11 +45,11 @@ Shannon_dotplot <- ggplot(data, aes(GROUP, Shannon)) +
   labs(subtitle = get_test_label(stat.test, detailed = TRUE), y = "Shannon") +
   theme_classic()+
   theme(axis.title.x = element_blank(),
-        axis.title.y = element_text(size = 20),
-        axis.text.x = element_text(size = 20),
-        axis.text.y = element_text(size = 20),
-        plot.subtitle = element_text(size = 20),
-        legend.text = element_text(size = 20), legend.position = "none") +
+        axis.title.y = element_text(size = 40),
+        axis.text.x = element_text(size = 40),
+        axis.text.y = element_text(size = 40),
+        plot.subtitle = element_text(size = 30),
+        legend.text = element_text(size = 40), legend.position = "none") +
   labs(
     subtitle = get_test_label(stat.test, detailed = FALSE),
     y = "Shannon index"
@@ -70,7 +70,7 @@ dev.off()
 
 #Dot plot - Richness
 
-data<-read.delim("Richness_over_time.txt", row.names = 1)
+data<-read.delim("diversity_metadata.txt", row.names = 1)
 data %>% sample_n_by(GROUP, size = 2)
 data %>%
   group_by(GROUP) %>%
@@ -96,11 +96,11 @@ Richness_dotplot <- ggplot(data, aes(GROUP, Richness)) +
   labs(subtitle = get_test_label(stat.test, detailed = TRUE), y = "Richness") +
   theme_classic()+
   theme(axis.title.x = element_blank(),
-        axis.title.y = element_text(size = 20),
-        axis.text.x = element_text(size = 20),
-        axis.text.y = element_text(size = 20),
-        plot.subtitle = element_text(size = 20),
-        legend.text = element_text(size = 20), legend.position = "none") +
+        axis.title.y = element_text(size = 40),
+        axis.text.x = element_text(size = 40),
+        axis.text.y = element_text(size = 40),
+        plot.subtitle = element_text(size = 30),
+        legend.text = element_text(size = 40), legend.position = "none") +
   labs(
     subtitle = get_test_label(stat.test, detailed = FALSE),
     y = "Richness"
@@ -119,8 +119,8 @@ dev.off()
 # PCOA FIGURE 2C - PCOA HAP/noHAP
 
 (We followed the PCOA scripts from Montassier et al., Nat Med. 2023;29(11):2793-2804.)
-
-data1<-read.delim("counts.txt", row.names = 1)
+set.seed(1)
+data1<-read.delim("RPKMcounts.txt", row.names = 1)
 x<-t(data1)
 m <- read.delim("metadata.txt",row.names = 1)
 library(ggplot2)
@@ -134,17 +134,17 @@ var_exp <- pcoa(beta_table)$values
 beta_dist = as.dist(beta_table)
 length(beta_dist)
 # Run PERMANOVA
-ad = adonis(beta_dist ~ m$HAP_condition, permutations=999)
+ad = adonis(beta_dist ~ m$GROUP, permutations=999)
 p_val <- ad$aov.tab[1,6]
 r_sq <- ad$aov.tab[1,5]
 # Run stats for differentiation dispersion
-beta_out <- betadisper(beta_dist, m$HAP_condition)
+beta_out <- betadisper(beta_dist, m$GROUP)
 p_val_disp <- permutest(beta_out)$tab[1, 6]
 
 # Run stats on the coordinates
 PCOA < - PCOA[rownames(m),]
-wilcox.test(PCOA[,1] ~ m$HAP_condition)
-wilcox.test(PCOA[,2] ~ m$HAP_condition)
+wilcox.test(PCOA[,1] ~ m$GROUP)
+wilcox.test(PCOA[,2] ~ m$GROUP)
 # Plot beta diversity PCoA
 for(i in 1:ncol(PCOA)){
   colnames(PCOA)[i] <- paste("PC",i, sep = "")
@@ -160,10 +160,10 @@ PCOA$PC2 <- as.numeric(as.character(PCOA$PC2))
 PCOA$PC3 <- as.numeric(as.character(PCOA$PC3))
 PCOA$PC4 <- as.numeric(as.character(PCOA$PC4))
 # Make PCoA plot
-body_cols=c("HAP" = "red", "NO_HAP" = "blue")
+body_cols=c("HAP" = "red", "no_HAP" = "blue")
 body_PCOA <- ggplot(PCOA) +
   geom_point(size = 2, alpha=0.65, aes_string(x = "PC1", y = "PC2",
-                                              color = "HAP_condition")) +
+                                              color = "GROUP")) +
   scale_color_manual(values=body_cols) +
   theme_cowplot(font_size = 7) +
   guides(color=F) +
@@ -175,20 +175,20 @@ body_PCOA <- ggplot(PCOA) +
           element_text(color=NA))
 
 body_PCOA <- body_PCOA +
-  stat_ellipse(aes(x = PC1, y = PC2, color = HAP_condition))
+  stat_ellipse(aes(x = PC1, y = PC2, color = GROUP))
 
 # Make boxplot of PCs
 PC1_boxes <- ggplot(PCOA) +
-  geom_boxplot(aes_string(x = factor(PCOA$HAP_condition, levels=c("HAP",
-                                                                   "NO_HAP")), y = "PC1", fill = "HAP_condition")) +
+  geom_boxplot(aes_string(x = factor(PCOA$GROUP, levels=c("HAP",
+                                                                   "no_HAP")), y = "PC1", fill = "GROUP")) +
   scale_fill_manual(values=body_cols) +
   theme_cowplot(font_size = 7) +
   guides(fill=F)+
   coord_flip() +
   labs(x = "", y= paste("PC1 (", round(var_exp$Relative_eig[1],digits=3)*100, "%)", sep = ""))
 PC2_boxes <- ggplot(PCOA) +
-  geom_boxplot(aes_string(x =factor(PCOA$HAP_condition, levels=c("HAP",
-                                                                  "NO_HAP")), y = "PC2", fill = "HAP_condition")) +
+  geom_boxplot(aes_string(x =factor(PCOA$GROUP, levels=c("HAP",
+                                                                  "no_HAP")), y = "PC2", fill = "GROUP")) +
   scale_fill_manual(values=body_cols) +
   theme_cowplot(font_size = 7) +
   guides(fill=F) +
@@ -210,12 +210,12 @@ library(tidyverse)
 library(ggplot2)
 
 set.seed(1)
-data1<-read.delim("counts.txt", row.names = 1)
+data1<-read.delim("RPKMcounts.txt", row.names = 1)
 dataTransposed1<-t(data1)
 dist.1 <- vegdist(dataTransposed1, method = "bray")
 metadata <- read.delim("metadata.txt")
 
-ano = anosim(dataTransposed1, metadata$HAP_condition, distance = "bray", permutations = 9999)
+ano = anosim(dataTransposed1, metadata$GROUP, distance = "bray", permutations = 9999)
 ano
 plot(ano)
 
@@ -225,7 +225,7 @@ plot(nmds)
 
 
 ta.scores = as.data.frame(scores(nmds)$sites)
-metadata$HAP_condition = metadata$HAP_condition
+metadata$HAP_condition = metadata$GROUP
 
 NMDS_HAP_noHAP = ggplot(metadata, aes(x = ta.scores$NMDS1, y = ta.scores$NMDS2)) + 
   geom_point(aes(size = 10, colour = GROUP), alpha = 0.3)+ 
@@ -240,13 +240,13 @@ NMDS_HAP_noHAP = ggplot(metadata, aes(x = ta.scores$NMDS1, y = ta.scores$NMDS2))
   labs(x = "NMDS1", colour = "GROUP", y = "NMDS2", shape = "Type")  + 
   scale_colour_manual(values = c("RED", "BLUE","pink")) + stat_ellipse(geom = "polygon", aes(group = GROUP, color = GROUP, fill = GROUP), alpha = 0.05) +
   annotate("text", x = -2, y = 7, label = paste0("Stress: ", format(nmds$stress, digits = 4)), hjust = 2) +
-  annotate("text", x = -2, y = 6, label = paste0("P=", format(ano$signif, digits = 4)), hjust = 3) +
-  scale_x_continuous(breaks = c(-6,-3,0, 3, 6)) +
-  scale_y_continuous(breaks = c(-6,-3,0, 3, 6))
+  annotate("text", x = -2, y = 6, label = paste0("P=", format(ano$signif, digits = 4)), hjust = 3)+
+  scale_x_continuous(breaks = c(-8,-4,0, 4)) +
+  scale_y_continuous(breaks = c(-8,-4,0, 4))
 
 NMDS_HAP_noHAP
 
-pdf("NMDS_HAP_noHAP.pdf",width=10,height=5);
+pdf("NMDS_HAP_noHAP.pdf",width=10,height=8);
 NMDS_HAP_noHAP
 dev.off()
 
@@ -258,7 +258,7 @@ library(tidyverse)
 library(rstatix)
 library(ggpubr)
 
-data <- read.delim("WBC_between_HAP_NOHAP.txt", stringsAsFactors = FALSE)
+data <- read.delim("WBC_between.txt", stringsAsFactors = FALSE)
 head(data)
 
 data %>% sample_n_by(GROUP, size = 2)
@@ -276,16 +276,16 @@ stat.test <- stat.test %>% add_xy_position(x = "GROUP")
 WBC_Between_violin_HAP_noHAP <- ggplot(data, aes(GROUP, WBC)) +
   geom_violin(aes(fill = GROUP), color = "black", trim = TRUE) +  
   geom_boxplot(aes(fill = GROUP), width = 0.05, color = "black", outlier.shape = NA) +  
-  scale_fill_manual(values = c("Between-HAP patients" = "red", "Between-NO HAP patients" = "blue"), name = "GROUP") + 
+  scale_fill_manual(values = c("Inter HAP" = "red", "Inter no HAP" = "blue"), name = "GROUP") + 
   stat_pvalue_manual(stat.test, tip.length = 0, size = 20, y.position = 1.1, bracket.size = 2) +
   labs(subtitle = get_test_label(stat.test, detailed = TRUE)) +
   theme_classic() +
   theme(axis.title.x = element_blank(),
-        axis.title.y = element_text(size = 30),
-        axis.text.x = element_text(size = 20, colour = "black", face = "bold"),
-        axis.text.y = element_text(size = 30),
+        axis.title.y = element_text(size = 40),
+        axis.text.x = element_text(size = 40, colour = "black", face = "bold"),
+        axis.text.y = element_text(size = 40),
         plot.subtitle = element_text(size = 30),
-        legend.text = element_text(size = 30),
+        legend.text = element_text(size = 40),
         legend.position = "none") +
   labs(
     subtitle = get_test_label(stat.test, detailed = TRUE),
@@ -303,7 +303,7 @@ library(tidyverse)
 library(rstatix)
 library(ggpubr)
 
-data <- read.delim("Hellinger_between_HAP_NOHAP.txt", stringsAsFactors = FALSE)
+data <- read.delim("Hellinger_between.txt", stringsAsFactors = FALSE)
 head(data)
 
 data %>% sample_n_by(GROUP, size = 2)
@@ -321,16 +321,16 @@ stat.test <- stat.test %>% add_xy_position(x = "GROUP")
 Hellinger_Between_violin_HAP_noHAP <- ggplot(data, aes(GROUP, Hellinger)) +
   geom_violin(aes(fill = GROUP), color = "black", trim = TRUE) +  
   geom_boxplot(aes(fill = GROUP), width = 0.05, color = "black", outlier.shape = NA) +  
-  scale_fill_manual(values = c("Between-HAP patients" = "red", "Between-NO HAP patients" = "blue"), name = "GROUP") + 
+  scale_fill_manual(values = c("Inter HAP" = "red", "Inter no HAP" = "blue"), name = "GROUP") + 
   stat_pvalue_manual(stat.test, tip.length = 0, size = 20, y.position = 1.5, bracket.size = 2) +
   labs(subtitle = get_test_label(stat.test, detailed = TRUE)) +
   theme_classic() +
   theme(axis.title.x = element_blank(),
-        axis.title.y = element_text(size = 30),
-        axis.text.x = element_text(size = 20, colour = "black", face = "bold"),
-        axis.text.y = element_text(size = 30),
+        axis.title.y = element_text(size = 40),
+        axis.text.x = element_text(size = 40, colour = "black", face = "bold"),
+        axis.text.y = element_text(size = 40),
         plot.subtitle = element_text(size = 30),
-        legend.text = element_text(size = 30),
+        legend.text = element_text(size = 40),
         legend.position = "none") +
   labs(
     subtitle = get_test_label(stat.test, detailed = TRUE),
@@ -348,7 +348,7 @@ library(tidyverse)
 library(rstatix)
 library(ggpubr)
 
-data <- read.delim("Sorensen_between_HAP_NOHAP.txt", stringsAsFactors = FALSE)
+data <- read.delim("Sorensen_between.txt", stringsAsFactors = FALSE)
 head(data)
 
 data %>% sample_n_by(GROUP, size = 2)
@@ -366,16 +366,16 @@ stat.test <- stat.test %>% add_xy_position(x = "GROUP")
 Sorensen_Between_violin_HAP_noHAP <- ggplot(data, aes(GROUP, Sorensen)) +
   geom_violin(aes(fill = GROUP), color = "black", trim = TRUE) +  
   geom_boxplot(aes(fill = GROUP), width = 0.05, color = "black", outlier.shape = NA) +  
-  scale_fill_manual(values = c("Between-HAP patients" = "red", "Between-NO HAP patients" = "blue"), name = "GROUP") + 
+  scale_fill_manual(values = c("Inter HAP" = "red", "Inter no HAP" = "blue"), name = "GROUP") + 
   stat_pvalue_manual(stat.test, tip.length = 0, size = 20, y.position = 1.1, bracket.size = 2) +
   labs(subtitle = get_test_label(stat.test, detailed = TRUE)) +
   theme_classic() +
   theme(axis.title.x = element_blank(),
-        axis.title.y = element_text(size = 30),
-        axis.text.x = element_text(size = 20, colour = "black", face = "bold"),
-        axis.text.y = element_text(size = 30),
+        axis.title.y = element_text(size = 40),
+        axis.text.x = element_text(size = 40, colour = "black", face = "bold"),
+        axis.text.y = element_text(size = 40),
         plot.subtitle = element_text(size = 30),
-        legend.text = element_text(size = 30),
+        legend.text = element_text(size = 40),
         legend.position = "none") +
   labs(
     subtitle = get_test_label(stat.test, detailed = TRUE),
