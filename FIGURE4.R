@@ -165,7 +165,7 @@ Caudoviricetes_discriminant_boxplot <- ggplot(data, aes(reorder(GROUP, GROUP, fu
   geom_boxplot(aes(fill = GROUP), width = 2, color = "black", outlier.shape = NA) +  
   scale_fill_manual(values = c("Upcoming HAP" = "pink", "NO HAP" = "blue"), name = "GROUP") +  
   stat_pvalue_manual(stat.test, tip.length = 0, size = 10, y.position = 25, bracket.size = 2) +
-  labs(subtitle = get_test_label(stat.test, detailed = TRUE), y = "Discriminant Caudoviricetes at 5-3 period
+  labs(subtitle = get_test_label(stat.test, detailed = TRUE), y = "Caudoviricetes relative abundance at 6-3 period
   before HAP onset (Relative abundance)") +
   theme_classic() +
   theme(axis.title.x = element_blank(),
