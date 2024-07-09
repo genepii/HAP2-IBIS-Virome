@@ -6,7 +6,7 @@
 
 library(vegan)
 set.seed(1)
-data1<-read.delim("counts.txt", row.names = 1)
+data1<-read.delim("RPKMcounts.txt", row.names = 1)
 dataTransposed1<-t(data1)
 dist.1 <- vegdist(dataTransposed1, method = "bray")
 metadata <- read.delim("metadata.txt")
@@ -35,15 +35,25 @@ batch_boxplot <- boxplot(dispersion, ylab = "Distance of centroids", col=colors)
 
 dev.off()
 
-
 # Supplementary FIGURE 2
 
 library(ggplot2)
 library(reshape2)
 library(pheatmap)
 library(viridis)
+library(reshape)
+library(magrittr)
 
-matrix <- read.delim("Relative_abundance.txt", header = TRUE, sep = "\t")
+matrix <- read.delim("dRPKM_final_family.txt", header = TRUE, sep = "\t", row.names = 1)
+Relab <- matrix %>%
+  apply(2, function(x) x/sum(x)) %>%
+  `*`(100)
+
+head(Relab)
+
+write.table(Relab,file="Relab_family.txt",quote=F,sep="\t",col.names=NA)
+
+matrix <- read.delim("Relab_family.txt", header = TRUE, sep = "\t")
 
 melted_data <- melt(matrix, id.vars = "fam")
 colnames(melted_data) <- c("Family","Sample", "Value")
@@ -51,7 +61,7 @@ colnames(melted_data) <- c("Family","Sample", "Value")
 
 
 virus_colors <- c("#450659FF","#460B5EFF","#471063FF","#481668FF","#481A6CFF","#481E70FF","#482374FF","#482778FF",
-                  "#472C7AFF","#472F7EFF","#463480FF","#453882FF","#433D84FF","#424086FF","#0000FF","#3F4889FF","#3D4D8AFF",
+                  "#472C7AFF","#472F7EFF","#463480FF","#453882FF","#433D84FF","#0000FF","#424086FF","#3F4889FF","#3D4D8AFF",
                   "#3C508BFF","#3A538BFF","#38588CFF","#375B8DFF","#355F8DFF","#33628DFF","#31668EFF","#30698EFF","#2E6D8EFF",
                   "#2D708EFF","#2C738EFF","#2A768EFF","#29798EFF","#287D8EFF","#27808EFF","#25838EFF","#24868EFF","#238A8DFF",
                   "#228D8DFF","#21908CFF","#20938CFF","#1F968BFF","#1F9A8AFF","#1E9D89FF","#1FA188FF","#20A386FF","#22A785FF",
@@ -69,8 +79,9 @@ RELAB_heatmap <- ggplot(melted_data, aes(fill = Family, y = Value, x = Sample)) 
        y = "Relative abundance") +
   theme_classic() +
   geom_col(colour = "black", stat = "identity") +
-  theme(legend.text = element_text(size = 12),
+  theme(legend.text = element_text(size = 18),
         legend.title = element_text(size = 12),
+        legend.position = "bottom",
         axis.text.y = element_text(face = "bold", size = 14)) +
   theme(axis.text.x = element_blank())
 
@@ -150,7 +161,7 @@ dev.off()
 
 #Loess plot - Shannon index
 
-data<-read.delim("IBIS_clinical_final_Upcoming_noHAP.txt", row.names = 1)
+data<-read.delim("ShannonDiversity_over_time_before_HAP_onset.txt", row.names = 1)
 custom_colors <- c("Upcoming_HAP" = "pink", "NO_HAP" = "#0000FF")
 
 # loess with custom colors
@@ -181,7 +192,7 @@ dev.off()
 # Supplementary FIGURE 6
 
 #Loess plot - Richness
-data<-read.delim("IBIS_clinical_final_Upcoming_noHAP.txt", row.names = 1)
+data<-read.delim("Richness_over_time_before_HAP_onset.txt", row.names = 1)
 custom_colors <- c("Upcoming_HAP" = "pink", "NO_HAP" = "#0000FF")
 
 # loess with custom colors
@@ -247,9 +258,9 @@ write.table(dis,"WeightedUnifrac.txt", sep = '\t')
 
 #Plot Unifrac dynamics :
 
-data <- read.delim("WUF_dynamics.txt", stringsAsFactors = FALSE)
+data <- read.delim("Unifrac_sliding_window.txt", stringsAsFactors = FALSE)
 
-custom_colors <- c("HAP" = "red", "NO_HAP" = "blue")
+custom_colors <- c("upcoming HAP" = "pink", "no HAP" = "blue")
 
 WUF_dynamics <- ggplot(data, aes(x = DAY, y = WUF, group = GROUP, color = GROUP)) +
   geom_line() +
@@ -268,11 +279,11 @@ WUF_dynamics <- ggplot(data, aes(x = DAY, y = WUF, group = GROUP, color = GROUP)
     legend.text = element_text(size=25),
     legend.title = element_blank()
   ) +  
-  labs(x = "Days before HAP onset (Sliding window 2d)", y = "Weighted Unifrac Distance")
+  labs(x = "Days before HAP onset (Sliding window 3d)", y = "Weighted Unifrac Distance")
 
 
 WUF_dynamics_stat <- WUF_dynamics + scale_y_continuous(breaks = c(0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1)) +scale_x_continuous(breaks = c(1, 2, 3, 4), labels = c("5-3", "4-2", "3-1", "2-0"))+
-  geom_text(data = data, aes(x = DAY, y = 0.5, label = ifelse(Pvalue < 0.0001, "****", ifelse(Pvalue < 0.001, "***", ifelse(Pvalue < 0.01, "**", ifelse(Pvalue < 0.05, "*", "ns"))))), color = "black", size = 16, vjust = -17.3)
+  geom_text(data = data, aes(x = DAY, y = 0.6, label = ifelse(Pvalue < 0.0001, "****", ifelse(Pvalue < 0.001, "***", ifelse(Pvalue < 0.01, "**", ifelse(Pvalue < 0.05, "*", "ns"))))), color = "black", size = 16, vjust = -15.5)
 
 pdf("WUF_dynamics.pdf",width=15,height=10);
 WUF_dynamics_stat
@@ -292,7 +303,7 @@ melted_data <- melt(matrix, id.vars = "fam")
 colnames(melted_data) <- c("Virus","Sample", "Value")
 
 virus_colors <- c("#440154FF","#450559FF","#460A5DFF","#470F62FF","#481467FF","#48186AFF","#481C6EFF","#482072FF",
-                  "#482576FF","#482979FF","#472D7BFF","#46307EFF","#463480FF","#453883FF","#0000FF","#424086FF",
+                  "#482576FF","#482979FF","#472D7BFF","#46307EFF","#463480FF","#453883FF","#424086FF","#0000FF",
                   "#414487FF","#3F4788FF","#3E4B89FF","#3C4F8AFF","#3B528BFF","#39558CFF","#38598CFF","#365C8DFF",
                   "#35608DFF","#33638DFF","#31668EFF","#30698EFF","#2F6C8EFF","#2E6F8EFF","#2C728EFF","#2B758EFF",
                   "#2A788EFF","#297B8EFF","#277E8EFF","#26828EFF","#25848EFF","#24878EFF","#238A8DFF","#228D8DFF",
@@ -300,10 +311,8 @@ virus_colors <- c("#440154FF","#450559FF","#460A5DFF","#470F62FF","#481467FF","#
                   "#22A884FF","#25AB82FF","#27AD81FF","#2BB17FFF","#2FB47CFF","#34B679FF","#38B977FF","#3EBC74FF",
                   "#43BF71FF","#49C16DFF","#50C46AFF","#56C667FF","#5DC863FF","#64CB5FFF","#6BCD5AFF","#72D056FF",
                   "#7AD151FF","#82D34DFF","#8AD547FF","#92D742FF","#9AD93CFF","#A2DA37FF","#AADC32FF","#B3DD2CFF",
-                  "#BBDF27FF","#C4E022FF","#CDE11DFF","#999999","#DEE318FF","#E6E419FF","#EEE51CFF","#F6E620FF",
-                  "#FDE725FF")
-
-
+                  "#BBDF27FF","#C4E022FF","#CDE11DFF","#00FF00FF","#DEE318FF","#E6E419FF","#EEE51CFF","#F6E620FF",
+                  "#FDE725FF","#333333", "#999999", "#0000FFFF", "#FFFF00FF", "#00FFFFFF", "#FF00FFFF", "#FF7F00FF")
 
 RELAB_heatmap_prevhap <- ggplot(melted_data, aes(fill = Virus, y = Value, x = Sample)) +
   geom_bar(position = "stack", stat = "identity") +
@@ -312,7 +321,7 @@ RELAB_heatmap_prevhap <- ggplot(melted_data, aes(fill = Virus, y = Value, x = Sa
        y = "Relative abundance") +
   theme_classic() +
   geom_col(colour = "black", stat = "identity") +
-  theme(legend.text = element_text(size = 20),
+  theme(legend.text = element_text(size = 16),
         legend.position = "bottom",
         legend.title = element_blank(),
         axis.title.y = element_text(size = 20),
@@ -324,133 +333,4 @@ RELAB_heatmap_prevhap <- ggplot(melted_data, aes(fill = Virus, y = Value, x = Sa
 pdf("RELAB_heatmap_prevhap.pdf",width=20,height=15);
 RELAB_heatmap_prevhap
 dev.off()
-
-# Supplementary FIGURE 9
-
-#wbc boxplot
-
-library(ggplot2)
-library(tidyverse)
-library(rstatix)
-library(ggpubr)
-
-data <- read.delim("WBC_53.txt", stringsAsFactors = FALSE)
-head(data)
-
-data %>% sample_n_by(GROUP, size = 2)
-data %>%
-  group_by(GROUP) %>%
-  get_summary_stats(WBC, type = "median_iqr")
-
-stat.test <- data %>% 
-  wilcox_test(WBC ~ GROUP) %>%
-  add_significance()
-stat.test
-data %>% wilcox_effsize(WBC ~ GROUP)
-stat.test <- stat.test %>% add_xy_position(x = "GROUP")
-
-WBC_boxplot <- ggplot(data, aes(reorder(GROUP, GROUP, function(x) -sum(x == "Upcoming HAP")), WBC)) +
-  geom_boxplot(aes(fill = GROUP), width = 2, color = "black", outlier.shape = NA) +  
-  scale_fill_manual(values = c("Upcoming HAP" = "pink", "NO HAP" = "blue"), name = "GROUP") + 
-  stat_pvalue_manual(stat.test, tip.length = 0, size = 10, y.position = 1, bracket.size = 2) +
-  labs(subtitle = get_test_label(stat.test, detailed = TRUE), y = "Bray-Curtis dissimilarity") +
-  theme_classic() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_text(size = 30),
-        axis.text.x = element_text(size = 30, colour = "black", face = "bold"),
-        axis.text.y = element_text(size = 30),
-        plot.subtitle = element_text(size = 30),
-        legend.text = element_text(size = 30),
-        legend.position = "none")
-
-
-pdf("WBC_boxplot.pdf",width=12,height=9);
-WBC_boxplot
-dev.off()
-
-# hellinger boxplot
-
-library(ggplot2)
-library(tidyverse)
-library(rstatix)
-library(ggpubr)
-
-data <- read.delim("Hellinger_53.txt", stringsAsFactors = FALSE)
-head(data)
-
-data %>% sample_n_by(GROUP, size = 2)
-data %>%
-  group_by(GROUP) %>%
-  get_summary_stats(Hellinger, type = "median_iqr")
-
-stat.test <- data %>% 
-  wilcox_test(Hellinger ~ GROUP) %>%
-  add_significance()
-stat.test
-data %>% wilcox_effsize(Hellinger ~ GROUP)
-stat.test <- stat.test %>% add_xy_position(x = "GROUP")
-
-Hellinger_boxplot <- ggplot(data, aes(reorder(GROUP, GROUP, function(x) -sum(x == "Upcoming HAP")), Hellinger)) +
-  geom_boxplot(aes(fill = GROUP), width = 2, color = "black", outlier.shape = NA) +  
-  scale_fill_manual(values = c("Upcoming HAP" = "pink", "NO HAP" = "blue"), name = "GROUP") +  
-  stat_pvalue_manual(stat.test, tip.length = 0, size = 10, y.position = 1.4, bracket.size = 2) +
-  labs(subtitle = get_test_label(stat.test, detailed = TRUE)) +
-  theme_classic() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_text(size = 30),
-        axis.text.x = element_text(size = 30, colour = "black", face = "bold"),
-        axis.text.y = element_text(size = 30),
-        plot.subtitle = element_text(size = 30),
-        legend.text = element_text(size = 30),
-        legend.position = "none") +
-  labs(
-    subtitle = get_test_label(stat.test, detailed = TRUE),
-    y = "Hellinger dissimilarity"
-  )
-
-pdf("Hellinger_boxplot.pdf",width=12,height=9);
-Hellinger_boxplot
-dev.off()
-
-#sorensen boxplot 
-
-library(ggplot2)
-library(tidyverse)
-library(rstatix)
-library(ggpubr)
-
-data <- read.delim("Sorensen_53.txt", stringsAsFactors = FALSE)
-head(data)
-
-data %>% sample_n_by(GROUP, size = 2)
-data %>%
-  group_by(GROUP) %>%
-  get_summary_stats(Sorensen, type = "median_iqr")
-
-stat.test <- data %>% 
-  wilcox_test(Sorensen ~ GROUP) %>%
-  add_significance()
-stat.test
-data %>% wilcox_effsize(Sorensen ~ GROUP)
-stat.test <- stat.test %>% add_xy_position(x = "GROUP")
-
-Sorensen_boxplot <- ggplot(data, aes(reorder(GROUP, GROUP, function(x) -sum(x == "Upcoming HAP")), Sorensen)) +
-  geom_boxplot(aes(fill = GROUP), width = 2, color = "black", outlier.shape = NA) + 
-  scale_fill_manual(values = c("Upcoming HAP" = "pink", "NO HAP" = "blue"), name = "GROUP") +  
-  stat_pvalue_manual(stat.test, tip.length = 0, size = 10, y.position = 1, bracket.size = 2) +
-  labs(subtitle = get_test_label(stat.test, detailed = TRUE), y = "Sorensen dissimilarity") +
-  theme_classic() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_text(size = 30),
-        axis.text.x = element_text(size = 30, colour = "black", face = "bold"),
-        axis.text.y = element_text(size = 30),
-        plot.subtitle = element_text(size = 30),
-        legend.text = element_text(size = 30),
-        legend.position = "none")
-
-
-pdf("Sorensen_boxplot.pdf",width=12,height=9);
-Sorensen_boxplot
-dev.off()
-
 ############################################################################################################################################################
