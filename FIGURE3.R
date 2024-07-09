@@ -6,7 +6,7 @@
 
 #Dot plot - Shannon
 
-data<-read.delim("IBIS_clinical_final_Upcoming_noHAP.txt", row.names = 1)
+data<-read.delim("diversity_metadata.txt", row.names = 1)
 data %>% sample_n_by(GROUP, size = 2)
 data %>%
   group_by(GROUP) %>%
@@ -58,7 +58,7 @@ dev.off()
 
 #Dot plot - Richness
 
-data<-read.delim("IBIS_clinical_final_Upcoming_noHAP.txt", row.names = 1)
+data<-read.delim("diversity_metadata.txt", row.names = 1)
 data %>% sample_n_by(GROUP, size = 2)
 data %>%
   group_by(GROUP) %>%
@@ -106,7 +106,7 @@ dev.off()
 
 # PCOA FIGURE 3C - PCOA Upcoming/noHAP
 
-data1<-read.delim("counts.txt", row.names = 1)
+data1<-read.delim("RPKMcounts.txt", row.names = 1)
 x<-t(data1)
 m <- read.delim("metadata.txt",row.names = 1)
 library(ggplot2)
@@ -119,7 +119,7 @@ var_exp <- pcoa(beta_table)$values
 # Run stats for differentiation centroids
 beta_dist = as.dist(beta_table)
 length(beta_dist)
-# Run PERMANOVA
+# Run PERMAnoVA
 ad = adonis(beta_dist ~ m$GROUP, permutations=999)
 p_val <- ad$aov.tab[1,6]
 r_sq <- ad$aov.tab[1,5]
@@ -146,7 +146,7 @@ PCOA$PC2 <- as.numeric(as.character(PCOA$PC2))
 PCOA$PC3 <- as.numeric(as.character(PCOA$PC3))
 PCOA$PC4 <- as.numeric(as.character(PCOA$PC4))
 # Make PCoA plot
-body_cols=c("Upcoming_HAP" = "pink", "NO_HAP" = "blue")
+body_cols=c("HAP" = "pink", "no_HAP" = "blue")
 body_PCOA <- ggplot(PCOA) +
   geom_point(size = 2, alpha=0.65, aes_string(x = "PC1", y = "PC2",
                                               color = "GROUP")) +
@@ -165,16 +165,16 @@ body_PCOA <- body_PCOA +
 
 # Make boxplot of PCs
 PC1_boxes <- ggplot(PCOA) +
-  geom_boxplot(aes_string(x = factor(PCOA$GROUP, levels=c("Upcoming_HAP",
-                                                                  "NO_HAP")), y = "PC1", fill = "GROUP")) +
+  geom_boxplot(aes_string(x = factor(PCOA$GROUP, levels=c("HAP",
+                                                                  "no_HAP")), y = "PC1", fill = "GROUP")) +
   scale_fill_manual(values=body_cols) +
   theme_cowplot(font_size = 7) +
   guides(fill=F)+
   coord_flip() +
   labs(x = "", y= paste("PC1 (", round(var_exp$Relative_eig[1],digits=3)*100, "%)", sep = ""))
 PC2_boxes <- ggplot(PCOA) +
-  geom_boxplot(aes_string(x =factor(PCOA$GROUP, levels=c("Upcoming_HAP",
-                                                                 "NO_HAP")), y = "PC2", fill = "GROUP")) +
+  geom_boxplot(aes_string(x =factor(PCOA$GROUP, levels=c("HAP",
+                                                                 "no_HAP")), y = "PC2", fill = "GROUP")) +
   scale_fill_manual(values=body_cols) +
   theme_cowplot(font_size = 7) +
   guides(fill=F) +
@@ -185,7 +185,7 @@ PC2_boxes <- ggplot(PCOA) +
 top2 <- plot_grid(PC2_boxes, body_PCOA, ncol=2, rel_widths=c(0.3, 1))
 bottom2 <- plot_grid(NULL, PC1_boxes, ncol=2, rel_widths=c(0.3, 1))
 together2 <- plot_grid(top2, bottom2, nrow=2, rel_heights=c(1, 0.3))
-pdf("PCOA_Upcoming_noHAP.pdf",width=7,height=3.5);
+pdf("PCOA_noHAP.pdf",width=7,height=3.5);
 together2
 dev.off()
 
@@ -197,7 +197,7 @@ library(tidyverse)
 library(ggplot2)
 
 set.seed(1)
-data1<-read.delim("counts.txt", row.names = 1)
+data1<-read.delim("RPKMcounts.txt", row.names = 1)
 dataTransposed1<-t(data1)
 dist.1 <- vegdist(dataTransposed1, method = "bray")
 metadata <- read.delim("metadata.txt")
