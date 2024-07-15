@@ -100,7 +100,7 @@ pdf("Vibrant.pdf",width=15,height=20);
 plot
 dev.off()
 
-# FIGURE 5C - Betadiversity WBC/Hellinger/Sorensen in sliding window 6-3 days before HAP onset
+# FIGURE 5C - Betadiversity WBC/Hellinger/Sorensen in sliding window 5-3 days before HAP onset
 
 library(ggplot2)
 library(tidyverse)
@@ -137,13 +137,13 @@ Betadiv_boxplot <- ggplot(data, aes(reorder(GROUP, GROUP, function(x) -sum(x == 
         legend.position = "none")
 
 
-pdf("Betadiv_boxplot_63.pdf",width=12,height=9);
+pdf("Betadiv_boxplot_53.pdf",width=12,height=9);
 Betadiv_boxplot
 dev.off()
 
 # FIGURE 5D
 
-#Use Fisher test to identify discriminant vOTUs in HAP and no HAP signature 6 days before the HAP onset.
+#Use Fisher test to identify discriminant vOTUs in HAP and no HAP signature 5-3 days before the HAP onset.
 #Input table : Presence absence counts
 
 otu_data <- read.delim("Presence absence.txt", header = TRUE)
@@ -187,7 +187,7 @@ dev.off()
 
 # FIGURE 5E - Lefse HAP vOTUs
 
-#Use LEfSe to identify discriminant vOTUs in the HAP signature 6 days before the HAP onset.
+#Use LEfSe to identify discriminant vOTUs in the HAP signature 5-3 days before the HAP onset.
 #Input table : log10RPKM counts
 
 #In shell, run :

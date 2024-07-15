@@ -49,10 +49,10 @@ WBC_dynamics <- ggplot(data, aes(x = DAY, y = WBC, group = GROUP, color = GROUP)
     legend.title = element_blank(),
     legend.position = "none"
   ) +  
-  labs(x = "Days before HAP onset (Sliding window 3d)", y = "Bray Curtis Dissimilarity")
+  labs(x = "Days before HAP onset (Sliding window 2d)", y = "Bray Curtis Dissimilarity")
 
 
-WBC_dynamics_stat <- WBC_dynamics + scale_y_continuous(breaks = c(0.8,0.85,0.9,0.95,1)) +scale_x_continuous(breaks = c(1, 2, 3, 4, 5), labels = c("6-4","5-3", "4-2", "3-1", "2-0"))+
+WBC_dynamics_stat <- WBC_dynamics + scale_y_continuous(breaks = c(0.8,0.85,0.9,0.95,1)) +scale_x_continuous(breaks = c(1, 2, 3, 4, 5), labels = c("5-4","4-3", "3-2", "2-1", "1-0"))+
   geom_text(data = data, aes(x = DAY, y = 0.8, label = ifelse(Pvalue < 0.0001, "****", ifelse(Pvalue < 0.001, "***", ifelse(Pvalue < 0.01, "**", ifelse(Pvalue < 0.05, "*", "ns"))))), color = "black", size = 16, vjust = -16.8)
 
 pdf("WBC_dynamics.pdf",width=15,height=10);
@@ -88,10 +88,10 @@ Hellinger_dynamics <- ggplot(data, aes(x = DAY, y = Hellinger, group = GROUP, co
     legend.title = element_blank(),
     legend.position = "none"
   ) +  
-  labs(x = "Days before HAP onset (Sliding window 3d)", y = "Hellinger Dissimilarity")
+  labs(x = "Days before HAP onset (Sliding window 2d)", y = "Hellinger Dissimilarity")
 
 
-Hellinger_dynamics_stat <- Hellinger_dynamics + scale_y_continuous(breaks = c(0.8,0.9,1,1.1,1.2,1.3,1.4)) +scale_x_continuous(breaks = c(1, 2, 3, 4, 5), labels = c("6-4","5-3", "4-2", "3-1", "2-0"))+
+Hellinger_dynamics_stat <- Hellinger_dynamics + scale_y_continuous(breaks = c(0.8,0.9,1,1.1,1.2,1.3,1.4)) +scale_x_continuous(breaks = c(1, 2, 3, 4, 5), labels = c("5-4","4-3", "3-2", "2-1", "1-0"))+
   geom_text(data = data, aes(x = DAY, y = 0.8, label = ifelse(Pvalue < 0.0001, "****", ifelse(Pvalue < 0.001, "***", ifelse(Pvalue < 0.01, "**", ifelse(Pvalue < 0.05, "*", "ns"))))), color = "black", size = 16, vjust = -16.5)
 
 pdf("Hellinger_dynamics.pdf",width=15,height=10);
@@ -125,17 +125,17 @@ Sorensen_dynamics <- ggplot(data, aes(x = DAY, y = Sorensen, group = GROUP, colo
     legend.title = element_blank(),
     legend.position = "none"
   ) +  
-  labs(x = "Days before HAP onset (Sliding window 3d)", y = "Sorensen Dissimilarity")
+  labs(x = "Days before HAP onset (Sliding window 2d)", y = "Sorensen Dissimilarity")
 
 
-Sorensen_dynamics_stat <- Sorensen_dynamics + scale_y_continuous(breaks = c(0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1)) +scale_x_continuous(breaks = c(1, 2, 3, 4, 5), labels = c("6-4","5-3", "4-2", "3-1", "2-0"))+
+Sorensen_dynamics_stat <- Sorensen_dynamics + scale_y_continuous(breaks = c(0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1)) +scale_x_continuous(breaks = c(1, 2, 3, 4, 5), labels = c("5-4","4-3", "3-2", "2-1", "1-0"))+
   geom_text(data = data, aes(x = DAY, y = 0.8, label = ifelse(Pvalue < 0.0001, "****", ifelse(Pvalue < 0.001, "***", ifelse(Pvalue < 0.01, "**", ifelse(Pvalue < 0.05, "*", "ns"))))), color = "black", size = 16, vjust = -6.5)
 
 pdf("Sorensen_dynamics.pdf",width=15,height=10);
 Sorensen_dynamics_stat
 dev.off()
 
-# FIGURE 4B - Caudoviricetes boxplot
+# FIGURE 4B - Caudoviricetes dynamics
 
 
 library(ggplot2)
@@ -143,47 +143,44 @@ library(tidyverse)
 library(rstatix)
 library(ggpubr)
 
-data <- read.delim("relative_abundance.txt", stringsAsFactors = FALSE)
+data <- read.delim("Caudoviricetes_sliding_windows.txt", stringsAsFactors = FALSE)
+
 data$GROUP <- factor(data$GROUP, levels = c("upcoming HAP", "no HAP"))
+
 custom_colors <- c("upcoming HAP" = "pink", "no HAP" = "blue")
-head(data)
 
-
-data %>% sample_n_by(GROUP, size = 2)
-data %>%
-  group_by(GROUP) %>%
-  get_summary_stats(Caudoviricetes, type = "median_iqr")
-
-stat.test <- data %>% 
-  wilcox_test(Caudoviricetes ~ GROUP) %>%
-  add_significance()
-stat.test
-data %>% wilcox_effsize(Caudoviricetes ~ GROUP)
-stat.test <- stat.test %>% add_xy_position(x = "GROUP")
-
-Caudoviricetes_discriminant_boxplot <- ggplot(data, aes(reorder(GROUP, GROUP, function(x) -sum(x == "Upcoming HAP")), Caudoviricetes)) +
-  geom_boxplot(aes(fill = GROUP), width = 2, color = "black", outlier.shape = NA) +  
-  scale_fill_manual(values = c("Upcoming HAP" = "pink", "NO HAP" = "blue"), name = "GROUP") +  
-  stat_pvalue_manual(stat.test, tip.length = 0, size = 10, y.position = 25, bracket.size = 2) +
-  labs(subtitle = get_test_label(stat.test, detailed = TRUE), y = "Caudoviricetes relative abundance at 6-3 period
-  before HAP onset (Relative abundance)") +
+Caudoviricetes_dynamics <- ggplot(data, aes(x = DAY, y = Caudoviricetes, group = GROUP, color = GROUP)) +
+  geom_line() +
+  geom_point(shape=20, size=10) +
+  geom_ribbon(aes(ymin = LowerCI, ymax = UpperCI, fill = GROUP), alpha = 0.4) +
+  scale_color_manual(values = custom_colors) +
+  scale_fill_manual(values = custom_colors) +
+  scale_x_continuous(breaks = seq(-4,3)) +  
   theme_classic() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_text(size = 30),
-        axis.text.x = element_text(size = 30, colour = "black", face = "bold"),
-        axis.text.y = element_text(size = 30),
-        plot.subtitle = element_text(size = 30),
-        legend.text = element_text(size = 30),
-        legend.position = "none")
+  theme(
+    panel.background = element_rect(fill = "white"),
+    axis.title.x = element_text(size = 40),
+    axis.title.y = element_text(size = 35),
+    axis.text.x = element_text(size = 40),
+    axis.text.y = element_text(size = 40),
+    legend.text = element_text(size=25),
+    legend.title = element_blank(),
+    legend.position = "none"
+  ) +  
+  labs(x = "Days before HAP onset (Sliding window 2d)", y = "Caudoviricetes relative abundance (%)")
 
 
-pdf("Caudoviricetes_boxplot.pdf",width=12,height=9);
-Caudoviricetes_discriminant_boxplot
+Caudoviricetes_dynamics_stat <- Caudoviricetes_dynamics + scale_y_continuous(breaks = c(60,70,80,90,100)) +scale_x_continuous(breaks = c(1, 2, 3, 4, 5), labels = c("5-4","4-3", "3-2", "2-1", "1-0"))+
+  geom_text(data = data, aes(x = DAY, y = 60, label = ifelse(Pvalue < 0.0001, "****", ifelse(Pvalue < 0.001, "***", ifelse(Pvalue < 0.01, "**", ifelse(Pvalue < 0.05, "*", "ns"))))), color = "black", size = 16, vjust = -14.3)
+
+pdf("Caudoviricetes_dynamics.pdf",width=15,height=10);
+Caudoviricetes_dynamics_stat
 dev.off()
+
 
 # FIGURE 4C - Fisher HAP/no HAP vOTUs
 
-#Use Fisher test to identify discriminant vOTUs in HAP and no HAP signature 6 days before the HAP onset.
+#Use Fisher test to identify discriminant vOTUs in HAP and no HAP signature 5-4 days before the HAP onset.
 #Input table : Presence absence counts
 
 otu_data <- read.delim("presence_absence.txt", header = TRUE)
@@ -227,7 +224,7 @@ dev.off()
 
 # FIGURE 4D - Lefse HAP vOTUs
 
-#Use LEfSe to identify discriminant vOTUs in the HAP signature 6 days before the HAP onset.
+#Use LEfSe to identify discriminant vOTUs in the HAP signature 5-4 days before the HAP onset.
 #Input table : log10RPKM counts
 
 #In shell, run :
