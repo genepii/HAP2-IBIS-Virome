@@ -35,134 +35,6 @@ batch_boxplot <- boxplot(dispersion, ylab = "Distance of centroids", col=colors)
 
 dev.off()
 
-# rarefaction
-
-library("phyloseq")
-
-library("ggplot2")
-
-otu = read.delim(file="dRPKM_final.txt",header=T,row.names=1,check.names=F) 
-tax = read.delim(file="tax.txt",header=T,row.names=1,check.names=F) 
-meta = read.delim(file="IBIS_clinical_final.txt",header=T,row.names=1,check.names=F) 
-otu <- round(otu, digits = 0)
-
-OTU = otu_table(as.matrix(otu), taxa_are_rows = TRUE)
-TAX = tax_table(as.matrix(tax))
-
-physeq = phyloseq(OTU, TAX)
-
-physeq = merge_phyloseq(physeq, sample_data(meta))
-
-#### 
-
-require(parallel)
-options(mc.cores= 16)
-require(vegan)
-## Rarefaction curve, ggplot style
-ggrare <- function(physeq, step = 10, label = NULL, color = NULL, plot = TRUE, parallel = FALSE, se = TRUE) {
-  ## Args:
-  ## - physeq: phyloseq class object, from which abundance data are extracted
-  ## - step: Step size for sample size in rarefaction curves
-  ## - label: Default `NULL`. Character string. The name of the variable
-  ##          to map to text labels on the plot. Similar to color option
-  ##          but for plotting text.
-  ## - color: (Optional). Default ‘NULL’. Character string. The name of the
-  ##          variable to map to colors in the plot. This can be a sample
-  ##          variable (among the set returned by
-  ##          ‘sample_variables(physeq)’ ) or taxonomic rank (among the set
-  ##          returned by ‘rank_names(physeq)’).
-  ##
-  ##          Finally, The color scheme is chosen automatically by
-  ##          ‘link{ggplot}’, but it can be modified afterward with an
-  ##          additional layer using ‘scale_color_manual’.
-  ## - color: Default `NULL`. Character string. The name of the variable
-  ##          to map to text labels on the plot. Similar to color option
-  ##          but for plotting text.
-  ## - plot:  Logical, should the graphic be plotted.
-  ## - parallel: should rarefaction be parallelized (using parallel framework)
-  ## - se:    Default TRUE. Logical. Should standard errors be computed. 
-  ## require vegan
-  x <- as(otu_table(physeq), "matrix")
-  if (taxa_are_rows(physeq)) { x <- t(x) }
-  
-  ## This script is adapted from vegan `rarecurve` function
-  tot <- rowSums(x)
-  S <- rowSums(x > 0)
-  nr <- nrow(x)
-  
-  rarefun <- function(i) {
-    cat(paste("rarefying sample", rownames(x)[i]), sep = "\n")
-    n <- seq(1, tot[i], by = step)
-    if (n[length(n)] != tot[i]) {
-      n <- c(n, tot[i])
-    }
-    y <- rarefy(x[i, ,drop = FALSE], n, se = se)
-    if (nrow(y) != 1) {
-      rownames(y) <- c(".S", ".se")
-      return(data.frame(t(y), Size = n, Sample = rownames(x)[i]))
-    } else {
-      return(data.frame(.S = y[1, ], Size = n, Sample = rownames(x)[i]))
-    }
-  }
-  if (parallel) {
-    out <- mclapply(seq_len(nr), rarefun, mc.preschedule = FALSE)
-  } else {
-    out <- lapply(seq_len(nr), rarefun)
-  }
-  df <- do.call(rbind, out)
-  
-  ## Get sample data 
-  if (!is.null(sample_data(physeq, FALSE))) {
-    sdf <- as(sample_data(physeq), "data.frame")
-    sdf$Sample <- rownames(sdf)
-    data <- merge(df, sdf, by = "Sample")
-    labels <- data.frame(x = tot, y = S, Sample = rownames(x))
-    labels <- merge(labels, sdf, by = "Sample")
-  }
-  
-  ## Add, any custom-supplied plot-mapped variables
-  if( length(color) > 1 ){
-    data$color <- color
-    names(data)[names(data)=="color"] <- deparse(substitute(color))
-    color <- deparse(substitute(color))
-  }
-  if( length(label) > 1 ){
-    labels$label <- label
-    names(labels)[names(labels)=="label"] <- deparse(substitute(label))
-    label <- deparse(substitute(label))
-  }
-  
-  p <- ggplot(data = data, aes_string(x = "Size", y = ".S", group = "Sample", color = color))
-  p <- p + labs(x = "Sample Size", y = "Species Richness")
-  if (!is.null(label)) {
-    p <- p + geom_text(data = labels, aes_string(x = "x", y = "y", label = label, color = color),
-                       size = 4, hjust = 0)
-  }
-  p <- p + geom_line()
-  if (se) { ## add standard error if available
-    p <- p + geom_ribbon(aes_string(ymin = ".S - .se", ymax = ".S + .se", color = NULL, fill = color), alpha = 0.2)
-  }
-  if (plot) {
-    plot(p)
-  }
-  invisible(p)
-}
-
-#####
-
-
-p <- ggrare(physeq, color = "HAP_condition", se = FALSE) 
-
-p <- p + 
-  geom_vline(xintercept = 1000, linetype = "dashed", color = "red", size = 1) +
-  facet_wrap(~Patient, scales = "free") + 
-  theme_bw()
-
-plot(p + facet_wrap(~N_Atlanrea,scales = "free") + theme_bw())
-ggsave(file="Rarefaction_curve_sample_virome_ibis_red.pdf",width=50,height=30, limitsize= FALSE)
-
-
-
 # Supplementary FIGURE 2
 
 library(ggplot2)
@@ -298,17 +170,17 @@ Shannon_loessPlot <- ggplot(data, aes(x = HAP_onset, y = Shannon, color = GROUP,
   scale_y_continuous(breaks = c(0,1,2,3,4,5))+
   stat_smooth(metho1 = "loess", formula = y ~ x, aes(fill = GROUP), alpha = 0.3) +
   scale_x_continuous(breaks = c(-6,-5, -4, -3,-2,-1)) +
-  scale_color_manual(values = custom_colors) +  # Add custom colors for points
-  scale_fill_manual(values = custom_colors) +   # Add custom colors for stat_smooth
+  scale_color_manual(values = custom_colors) +  
+  scale_fill_manual(values = custom_colors) + 
   theme_classic() +
   theme(
-    axis.text = element_text(size = 20),        # Adjust size of axis text
-    axis.title = element_text(size = 20),       # Adjust size of axis titles
-    legend.text = element_text(size = 20),      # Adjust size of legend text
-    legend.title = element_blank()      # Adjust size of legend title
+    axis.text = element_text(size = 20),      
+    axis.title = element_text(size = 20),       
+    legend.text = element_text(size = 20),   
+    legend.title = element_blank()  
   ) +
-  xlab("Days relative to HAP onset") +  # Add or modify the x-axis label
-  ylab("Shannon index")    # Add or modify the y-axis label
+  xlab("Days relative to HAP onset") + 
+  ylab("Shannon index")    
 
 
 Shannon_loessPlot
@@ -330,17 +202,17 @@ Richness_loessPlot <- ggplot(data, aes(x = HAP_onset, y = Richness, color = GROU
   )+
   stat_smooth(metho1 = "lm", formula = y ~ x, aes(fill = GROUP), alpha = 0.3) +
   scale_x_continuous(breaks = c(-6,-5, -4, -3,-2,-1)) +
-  scale_color_manual(values = custom_colors) +  # Add custom colors for points
-  scale_fill_manual(values = custom_colors) +   # Add custom colors for stat_smooth
+  scale_color_manual(values = custom_colors) + 
+  scale_fill_manual(values = custom_colors) +   
   theme_classic() +
   theme(
-    axis.text = element_text(size = 20),        # Adjust size of axis text
-    axis.title = element_text(size = 20),       # Adjust size of axis titles
-    legend.text = element_text(size = 20),      # Adjust size of legend text
-    legend.title = element_blank()      # Adjust size of legend title
+    axis.text = element_text(size = 20),      
+    axis.title = element_text(size = 20),      
+    legend.text = element_text(size = 20),   
+    legend.title = element_blank()     
   ) +
-  xlab("Days relative to HAP onset") +  # Add or modify the x-axis label
-  ylab("Richness")    # Add or modify the y-axis label
+  xlab("Days relative to HAP onset") +  
+  ylab("Richness")   
 
 
 Richness_loessPlot
@@ -386,8 +258,8 @@ write.table(dis,"WeightedUnifrac.txt", sep = '\t')
 
 #Plot Unifrac dynamics :
 
-data <- read.delim("Unifrac_sliding_window.txt", stringsAsFactors = FALSE)
-
+data <- read.delim("WUF_SW_ov2_new_54.txt", stringsAsFactors = FALSE)
+data$GROUP <- factor(data$GROUP, levels = c("upcoming HAP", "no HAP"))
 custom_colors <- c("upcoming HAP" = "pink", "no HAP" = "blue")
 
 WUF_dynamics <- ggplot(data, aes(x = DAY, y = WUF, group = GROUP, color = GROUP)) +
@@ -411,7 +283,7 @@ WUF_dynamics <- ggplot(data, aes(x = DAY, y = WUF, group = GROUP, color = GROUP)
 
 
 WUF_dynamics_stat <- WUF_dynamics + scale_y_continuous(breaks = c(0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1)) +scale_x_continuous(breaks = c(1, 2, 3, 4), labels = c("5-4", "4-3", "3-2", "2-1"))+
-  geom_text(data = data, aes(x = DAY, y = 0.6, label = ifelse(Pvalue < 0.0001, "****", ifelse(Pvalue < 0.001, "***", ifelse(Pvalue < 0.01, "**", ifelse(Pvalue < 0.05, "*", "ns"))))), color = "black", size = 16, vjust = -15.5)
+  geom_text(data = data, aes(x = DAY, y = 0.6, label = ifelse(Pvalue < 0.0001, "****", ifelse(Pvalue < 0.001, "***", ifelse(Pvalue < 0.01, "**", ifelse(Pvalue < 0.05, "*", "ns"))))), color = "black", size = 16, vjust = -12.5)
 
 pdf("WUF_dynamics.pdf",width=15,height=10);
 WUF_dynamics_stat

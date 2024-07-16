@@ -121,7 +121,7 @@ while IFS= read -r sample_id; do
             --threads 64
 done < "sampleID.txt"
 
-#   d) krakentools to extract remaining humand and bacterial reads
+#   d) krakentools to filter out remaining humand, bacterial, fungal or archaeal reads
 
 mkdir krak2/krak_filter_human_bacteria
 

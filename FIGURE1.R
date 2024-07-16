@@ -62,12 +62,6 @@ VIBRANT_run.py -i vOTUs.fasta -t 114 -folder VIBRANT_results -virome
 library(ggplot2)
 
 # Define the data (Vibrant output)
-data <- data.frame(
-  Sample = c("HAP", "NO HAP", "HAP", "NO HAP"),
-  Virus = c("Lytic", "Lytic", "Lysogenic", "Lysogenic"),
-  Value = c(1734, 1648, 74, 72),
-  Percent= c(95.9, 95.8, 4.1, 4.2)
-)
 
 # Define custom virus colors
 style_colors <- c("Lytic" = "wheat1", "Lysogenic" = "orange3")

@@ -34,7 +34,7 @@ custom_colors <- c("upcoming HAP" = "pink", "no HAP" = "blue")
 WBC_dynamics <- ggplot(data, aes(x = DAY, y = WBC, group = GROUP, color = GROUP)) +
   geom_line() +
   geom_point(shape=20, size=10) +
-  geom_ribbon(aes(ymin = LowerCI, ymax = UpperCI, fill = GROUP), alpha = 0.4) +
+  geom_ribbon(aes(ymin = LowerCI, ymax = UpperCI, fill = GROUP), alpha = ifelse(data$GROUP == "no HAP", 0.3, 0.6)) +
   scale_color_manual(values = custom_colors) +
   scale_fill_manual(values = custom_colors) +
   scale_x_continuous(breaks = seq(-4,3)) +
@@ -73,7 +73,7 @@ custom_colors <- c("upcoming HAP" = "pink", "no HAP" = "blue")
 Hellinger_dynamics <- ggplot(data, aes(x = DAY, y = Hellinger, group = GROUP, color = GROUP)) +
   geom_line() +
   geom_point(shape=20, size=10) +
-  geom_ribbon(aes(ymin = LowerCI, ymax = UpperCI, fill = GROUP), alpha = 0.4) +
+  geom_ribbon(aes(ymin = LowerCI, ymax = UpperCI, fill = GROUP), alpha = ifelse(data$GROUP == "no HAP", 0.3, 0.6)) +
   scale_color_manual(values = custom_colors) +
   scale_fill_manual(values = custom_colors) +
   scale_x_continuous(breaks = seq(-4,3)) + 
@@ -110,7 +110,7 @@ custom_colors <- c("upcoming HAP" = "pink", "no HAP" = "blue")
 Sorensen_dynamics <- ggplot(data, aes(x = DAY, y = Sorensen, group = GROUP, color = GROUP)) +
   geom_line() +
   geom_point(shape=20, size=10) +
-  geom_ribbon(aes(ymin = LowerCI, ymax = UpperCI, fill = GROUP), alpha = 0.4) +
+  geom_ribbon(aes(ymin = LowerCI, ymax = UpperCI, fill = GROUP), alpha = ifelse(data$GROUP == "no HAP", 0.3, 0.6)) +
   scale_color_manual(values = custom_colors) +
   scale_fill_manual(values = custom_colors) +
   scale_x_continuous(breaks = seq(-4,3)) +  
@@ -152,7 +152,7 @@ custom_colors <- c("upcoming HAP" = "pink", "no HAP" = "blue")
 Caudoviricetes_dynamics <- ggplot(data, aes(x = DAY, y = Caudoviricetes, group = GROUP, color = GROUP)) +
   geom_line() +
   geom_point(shape=20, size=10) +
-  geom_ribbon(aes(ymin = LowerCI, ymax = UpperCI, fill = GROUP), alpha = 0.4) +
+  geom_ribbon(aes(ymin = LowerCI, ymax = UpperCI, fill = GROUP), alpha = ifelse(data$GROUP == "no HAP", 0.3, 0.6)) +
   scale_color_manual(values = custom_colors) +
   scale_fill_manual(values = custom_colors) +
   scale_x_continuous(breaks = seq(-4,3)) +  

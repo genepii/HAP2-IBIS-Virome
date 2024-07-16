@@ -26,7 +26,7 @@ summary_stats <- data %>%
 
 Shannon_dotplot_upcoming_noHAP <- ggplot(data, aes(GROUP, Shannon)) +
   geom_dotplot(method = "histodot", binaxis = "y", stackratio = 1,stackdir = "center", binpositions="all", binwidth = 0.1, dotsize = 1, aes(fill = GROUP, stroke = GROUP)) +
-  scale_fill_manual(values = c("NO_HAP" = "blue", "Upcoming_HAP" = "pink")) + # Set colors
+  scale_fill_manual(values = c("NO_HAP" = "blue", "Upcoming_HAP" = "pink")) + 
   stat_pvalue_manual(stat.test, tip.length = 0, size = 10, y.position = 6, bracket.size = 2) +
   scale_y_continuous(breaks = c(0,1,2,3,4,5)) +
   labs(subtitle = get_test_label(stat.test, detailed = TRUE), y = "Shannon") +
@@ -78,7 +78,7 @@ summary_stats <- data %>%
 
 Richness_dotplot_upcoming_noHAP <- ggplot(data, aes(GROUP, Richness)) +
   geom_dotplot(method = "histodot", binaxis = "y", stackratio = 1,stackdir = "center", binpositions="all", binwidth = 40, dotsize = 1, aes(fill = GROUP, stroke = GROUP)) +
-  scale_fill_manual(values = c("NO_HAP" = "blue", "Upcoming_HAP" = "pink")) + # Set colors
+  scale_fill_manual(values = c("NO_HAP" = "blue", "Upcoming_HAP" = "pink")) + 
   stat_pvalue_manual(stat.test, tip.length = 0, size = 10, y.position = 2100, bracket.size = 2) +
   labs(subtitle = get_test_label(stat.test, detailed = TRUE), y = "Richness") +
   labs(subtitle = get_test_label(stat.test, detailed = TRUE), y = "Richness") +
