@@ -10,18 +10,23 @@ library(ComplexHeatmap)
 # Read the matrix and keep NA values
 matrix <- read.delim("RPKMcounts.txt", header = TRUE, sep = "\t", row.names = 1)
 
-# Perform log transformation, handling zero values to avoid -Inf
-transformed_matrix <- log10(matrix)
-transformed_matrix[transformed_matrix=="-Inf"] <- NA
-
 # Read the sample annotations
 my_sample_col <- read.table("metadata.txt", header = TRUE, sep = "\t", row.names = 1)
 
-# Select top 10 families based on row sums
-family_sums <- rowSums(transformed_matrix, na.rm = TRUE)
-top10_families <- names(sort(family_sums, decreasing = TRUE))[1:10]
-matrix_top10 <- transformed_matrix[top10_families, ]
+prevalence <- rowSums(!is.na(matrix) & matrix != 0) / ncol(matrix)
 
+# Filter families based on prevalence threshold of 50%
+threshold <- 0.9
+matrix_filtered <- matrix[prevalence >= threshold, ]
+
+# Select top 10 families based on row sums
+family_sums <- rowSums(matrix_filtered, na.rm = TRUE)
+top10_families <- names(sort(family_sums, decreasing = TRUE))[1:10]
+matrix_top10 <- matrix[top10_families, ]
+
+# Perform log transformation, handling zero values to avoid -Inf
+transformed_matrix <- log10(matrix_top10)
+transformed_matrix[transformed_matrix=="-Inf"] <- NA
 
 col = list(HAP.condition = c("HAP" = "red", "no HAP" = "blue"),
            ARDS.condition = c("ARDS" = "green", "no ARDS" = "purple"),
@@ -45,7 +50,7 @@ ha <- HeatmapAnnotation(
 pdf("heatmap.pdf", width = 20, height = 14)
 
 # Combine the heatmap and the annotation
-Heatmap(matrix_top10, name = "log10RPKM",
+Heatmap(transformed_matrix, name = "log10RPKM",
         top_annotation = ha,
         row_names_gp = gpar(fontsize = 30),
         column_names_gp = gpar(fontsize = 0))
@@ -87,7 +92,7 @@ plot <- ggplot(data, aes(fill = Virus, y = Percent, x = Sample)) +
 # Print the plot
 print(plot)
 
-pdf("Vibrant_IBIS.pdf",width=15,height=20);
+pdf("Vibrant_IBIS_compa.pdf",width=15,height=20);
 plot
 dev.off()
 

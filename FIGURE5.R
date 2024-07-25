@@ -52,49 +52,7 @@ Heatmap(matrix_top10, name = "log10RPKM",
 
 dev.off()
 
-# FIGURE 5B - Phage lifestyle Barplot
-
-#### Vibrant results
-
-#VIBRANT to predict lifestyles (lysogenic/lytic) for vOTUs with minimum sequence length of 1000bp and containing at least 4 ORFs (open readings frames) 
-
-singularity shell vibrant.sif
-VIBRANT_run.py -i viral_vOTUs.fasta -t 114 -folder VIBRANT_results -virome
-
-library(ggplot2)
-
-# Define the data (Vibrant output)
-
-# Define custom virus colors
-style_colors <- c("Lytic" = "wheat1", "Lysogenic" = "orange3")
-
-# Create the plot
-plot <- ggplot(data, aes(fill = Virus, y = Percent, x = Sample)) +
-  geom_bar(position = "stack", stat = "identity") +
-  scale_fill_manual(values = style_colors) +
-  labs(x = "Cohort",
-       y = "Percentage (%)") +
-  theme_classic() +
-  geom_col(colour = "black", stat = "identity") +
-  geom_text(aes(label = Value), position = position_stack(vjust = 0.5), size = 20, color = "black") +
-  theme(legend.text = element_text(size = 40),
-        legend.position = "bottom",
-        legend.title = element_blank(),
-        axis.title.y = element_text(size = 40),
-        axis.title.x = element_text(size = 40),
-        axis.title = element_text(size = 40),
-        axis.text.y = element_text(face = "bold", size = 40)) +
-  theme(axis.text.x = element_text(face = "bold", size = 40, colour = "black"))
-
-# Print the plot
-print(plot)
-
-
-pdf("Vibrant.pdf",width=15,height=20);
-plot
-dev.off()
-
-# FIGURE 5C - Betadiversity WBC/Hellinger/Sorensen in sliding window 5-3 days before HAP onset
+# FIGURE 5B - Betadiversity WBC/Hellinger/Sorensen in sliding window 5-3 days before HAP onset
 
 library(ggplot2)
 library(tidyverse)
@@ -135,9 +93,9 @@ pdf("Betadiv_boxplot_53.pdf",width=12,height=9);
 Betadiv_boxplot
 dev.off()
 
-# FIGURE 5D
+# FIGURE 5C
 
-#Use Fisher test to identify discriminant vOTUs in HAP and no HAP signature 5-3 days before the HAP onset.
+#Use Fisher test to identify discriminant vOTUs signature 5-3 days before the HAP onset.
 #Input table : Presence absence counts
 
 otu_data <- read.delim("Presence absence.txt", header = TRUE)
@@ -156,7 +114,7 @@ HAP_noHAP_signature_vOTUs <- ggplot(data, aes(reorder(OTU, PVAL), PVAL, fill = C
   geom_bar(stat = "identity", width = 0.8, size = 0.3) +
   coord_flip() +
   theme_bw() +
-  scale_fill_manual(values = c("Caudoviricetes" = "pink2","Other bacteriophages" ="#ffcc00", "Unclassified viruses" = "grey28", "Eukaryotic viruses" = "grey")) +
+  scale_fill_manual(values = c("Caudoviricetes" = "green3","Other bacteriophages" ="#ffcc00", "Unclassified viruses" = "grey28", "Eukaryotic viruses" = "grey")) +
   theme(strip.placement = "outside",
                      strip.text.y = element_text(angle = 0)) +
   labs(title = "", x = "Significant vOTUs", y = "Fisher test -log10(P-Value)")+
@@ -171,7 +129,7 @@ HAP_noHAP_signature_vOTUs <- ggplot(data, aes(reorder(OTU, PVAL), PVAL, fill = C
         axis.text.x = element_text(size = 30),
         plot.title = element_blank(),
         legend.text = element_text(size = 30),
-        legend.position = "bottom") + facet_wrap(~GROUP)
+        legend.position = "bottom")
 
 
 pdf("signature_Fisher_PREVHAP.pdf",width=16,height=11);
@@ -179,7 +137,7 @@ HAP_noHAP_signature_vOTUs
 dev.off()
 
 
-# FIGURE 5E - Lefse HAP vOTUs
+# FIGURE 5D - Lefse HAP vOTUs
 
 #Use LEfSe to identify discriminant vOTUs in the HAP signature 5-3 days before the HAP onset.
 #Input table : log10RPKM counts
@@ -197,7 +155,7 @@ HAP_signature_vOTUs <- ggplot(data, aes(reorder(Taxon, LDA), LDA, fill = CLASS))
   geom_bar(stat = "identity", width = 0.7, size = 0.5) +
   coord_flip() +
   theme_bw()  +
-  scale_fill_manual(values = c("Caudoviricetes" = "pink2","Other bacteriophages" ="#ffcc00", "Unclassified viruses" = "grey28", "Eukaryotic viruses" = "grey")) +
+  scale_fill_manual(values = c("Caudoviricetes" = "green3","Other bacteriophages" ="#ffcc00", "Unclassified viruses" = "grey28", "Eukaryotic viruses" = "grey")) +
   theme(strip.placement = "outside",
         strip.text.y = element_text(angle = 0)) +
   labs(title = "LEfSe of vOTUs in HAP signature", x = "Differential abundant vOTUs", y = "LDA score (Log10)")+
@@ -222,7 +180,7 @@ dev.off()
 
 
 
-# FIGURE 5F-G 
+# FIGURE 5E
 
 #Run correlation tests on  log10(relative_abundace) of HAP-associated vOTUs and the core respiratory bacteriome
 
@@ -259,30 +217,36 @@ write.table(cor_matrix, file = "correlation_matrix.txt", sep = "\t", quote = FAL
 write.table(p_matrix, file = "pvalue_matrix.txt", sep = "\t", quote = FALSE)
 
 
-#Use correlation output in Chordiagram
-
-data <- read.delim("correlations.txt", header = TRUE, stringsAsFactors = FALSE)
+#Use correlation output in Sankeyplot
 
 library(ggplot2)
-library(circlize)
-library(scales)
-library(reshape)
+library(networkD3)
+library(dplyr)
+library(ggsankeyfier)
+library(webshot)
 
-grid.col = c(Fusobacterium = "red", Haemophilus = "orange", Prevotella = "green", Streptococcus = "blue", Veillonella = "purple")
-col_fun = colorRamp2(c(-1,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,0.4,0.5,0.6,0.7,0.8,0.9,1), c("red4","darkred","coral4","red3","red2","red1","red","slateblue", "slateblue1", "slateblue2", "slateblue3", "slateblue4","darkblue","navy"))
+links <- read.delim("Correlations.txt")
 
-pdf("chordDiagram_noHAP.pdf",width=20,height=20)
-chordDiagram(data, big.gap = 10, symmetric = TRUE, annotationTrack = c("grid"), col = col_fun, grid.col = grid.col, scale = F)
-lgd <- Legend(labels = c(-1,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,0.4,0.5,0.6,0.7,0.8,0.9,1), 
-              legend_gp = gpar(fill = c("red4","darkred","coral4","red3","red2","red1","red","slateblue", "slateblue1", "slateblue2", "slateblue3", "slateblue4","darkblue","navy")), 
-              title = "Correlation",
-              title_position = "leftcenter-rot",
-              labels_rot = TRUE,
-              grid_height = unit(1, "cm"),  
-              grid_width = unit(1, "cm"),   
-              title_gp = gpar(fontsize = 50),  
-              labels_gp = gpar(fontsize = 35))
-draw(lgd, x = unit(1, "npc") - unit(1, "cm"), y = unit(1, "npc") - unit(1, "cm"), just = c("right", "top"))
-dev.off()
+
+nodes <- data.frame(
+  name=c(as.character(links$source), as.character(links$target)) %>% 
+    unique()
+)
+
+
+links$IDsource <- match(links$source, nodes$name)-1 
+links$IDtarget <- match(links$target, nodes$name)-1
+
+links$group <- as.factor(c("..."))
+nodes$group <- as.factor(c("my_unique_group"))
+links_color <- 'd3.scaleOrdinal() .domain(["neg", "pos","my_unique_group"]) .range(["red", "blue","grey"])'
+
+
+p <- sankeyNetwork(Links = links, Nodes = nodes, Source = "IDsource", Target = "IDtarget", 
+                   Value = "value", NodeID = "name", colourScale=links_color,
+                   fontSize = 20, nodeWidth = 50, nodePadding=5,LinkGroup="group", NodeGroup="group")
+p 
+
+saveNetwork(p, "sankey.html", selfcontained = TRUE)
 
 ##############################################################

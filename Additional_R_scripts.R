@@ -156,8 +156,145 @@ pdf("Richness_loessPlot.pdf",width=12,height=8);
 Richness_loessPlot
 dev.off()
 
-
 # Supplementary FIGURE 5
+
+# PCOA HAP/noHAP
+
+(We followed the PCOA scripts from Montassier et al., Nat Med. 2023;29(11):2793-2804.)
+set.seed(1)
+data1<-read.delim("RPKMcounts.txt", row.names = 1)
+x<-t(data1)
+m <- read.delim("metadata.txt",row.names = 1)
+library(ggplot2)
+library(vegan)
+library(ape)
+library(cowplot)
+beta_table <- as.matrix(vegdist(x), method = "bray", na.rm = F)
+PCOA <- pcoa(beta_table)$vectors
+var_exp <- pcoa(beta_table)$values
+# Run stats for differentiation centroids
+beta_dist = as.dist(beta_table)
+length(beta_dist)
+# Run PERMANOVA
+ad = adonis(beta_dist ~ m$GROUP, permutations=999)
+p_val <- ad$aov.tab[1,6]
+r_sq <- ad$aov.tab[1,5]
+# Run stats for differentiation dispersion
+beta_out <- betadisper(beta_dist, m$GROUP)
+p_val_disp <- permutest(beta_out)$tab[1, 6]
+
+# Run stats on the coordinates
+PCOA < - PCOA[rownames(m),]
+wilcox.test(PCOA[,1] ~ m$GROUP)
+wilcox.test(PCOA[,2] ~ m$GROUP)
+# Plot beta diversity PCoA
+for(i in 1:ncol(PCOA)){
+  colnames(PCOA)[i] <- paste("PC",i, sep = "")
+}
+PCOA <- cbind(PCOA, rownames(PCOA))
+colnames(PCOA)[ncol(PCOA)] <- "SampleID"
+m <- cbind(m, rownames(PCOA))
+m <- data.frame(lapply(m, as.character), stringsAsFactors=FALSE)
+colnames(m)[ncol(m)] <- "SampleID"
+PCOA <- merge(PCOA, m, by = "SampleID")
+PCOA$PC1 <- as.numeric(as.character(PCOA$PC1))
+PCOA$PC2 <- as.numeric(as.character(PCOA$PC2))
+PCOA$PC3 <- as.numeric(as.character(PCOA$PC3))
+PCOA$PC4 <- as.numeric(as.character(PCOA$PC4))
+# Make PCoA plot
+body_cols=c("HAP" = "red", "no_HAP" = "blue")
+body_PCOA <- ggplot(PCOA) +
+  geom_point(size = 2, alpha=0.65, aes_string(x = "PC1", y = "PC2",
+                                              color = "GROUP")) +
+  scale_color_manual(values=body_cols) +
+  theme_cowplot(font_size = 7) +
+  guides(color=F) +
+  annotate("text", x = -0.45, y = -0.2, label= paste("P = ", p_val), size=2) +
+  annotate("text", x = -0.45, y = -0.25, label= paste("R2 = ", round(r_sq,
+                                                                     digits=3)), size=2) +
+  labs(x = "", y = "") +
+  theme(axis.text.x = element_text(color=NA), axis.text.y =
+          element_text(color=NA))
+
+body_PCOA <- body_PCOA +
+  stat_ellipse(aes(x = PC1, y = PC2, color = GROUP))
+
+# Make boxplot of PCs
+PC1_boxes <- ggplot(PCOA) +
+  geom_boxplot(aes_string(x = factor(PCOA$GROUP, levels=c("HAP",
+                                                                   "no_HAP")), y = "PC1", fill = "GROUP")) +
+  scale_fill_manual(values=body_cols) +
+  theme_cowplot(font_size = 7) +
+  guides(fill=F)+
+  coord_flip() +
+  labs(x = "", y= paste("PC1 (", round(var_exp$Relative_eig[1],digits=3)*100, "%)", sep = ""))
+PC2_boxes <- ggplot(PCOA) +
+  geom_boxplot(aes_string(x =factor(PCOA$GROUP, levels=c("HAP",
+                                                                  "no_HAP")), y = "PC2", fill = "GROUP")) +
+  scale_fill_manual(values=body_cols) +
+  theme_cowplot(font_size = 7) +
+  guides(fill=F) +
+  labs(x ="", y= paste("PC2 (", round(var_exp$Relative_eig[2], digits=
+                                        3)*100, "%)", sep = "")) +
+  theme(axis.text.x = element_text(color=NA))
+# Compile the PCoA and boxes
+top2 <- plot_grid(PC2_boxes, body_PCOA, ncol=2, rel_widths=c(0.3, 1))
+bottom2 <- plot_grid(NULL, PC1_boxes, ncol=2, rel_widths=c(0.3, 1))
+together2 <- plot_grid(top2, bottom2, nrow=2, rel_heights=c(1, 0.3))
+pdf("PCOA_HAP_noHAP.pdf",width=7,height=3.5);
+together2
+dev.off()
+
+# Supplementary FIGURE 6
+
+# NMDS HAP/noHAP
+
+library(vegan)
+library(tidyverse)
+library(ggplot2)
+
+set.seed(1)
+data1<-read.delim("RPKMcounts.txt", row.names = 1)
+dataTransposed1<-t(data1)
+dist.1 <- vegdist(dataTransposed1, method = "bray")
+metadata <- read.delim("metadata.txt")
+
+ano = anosim(dataTransposed1, metadata$GROUP, distance = "bray", permutations = 9999)
+ano
+plot(ano)
+
+nmds = metaMDS(dataTransposed1, distance = "bray")
+nmds
+plot(nmds)
+
+
+ta.scores = as.data.frame(scores(nmds)$sites)
+metadata$HAP_condition = metadata$GROUP
+
+NMDS_HAP_noHAP = ggplot(metadata, aes(x = ta.scores$NMDS1, y = ta.scores$NMDS2)) + 
+  geom_point(aes(size = 10, colour = GROUP), alpha = 0.3)+ 
+  theme(axis.text.y = element_text(colour = "black", size = 12, face = "bold"), 
+        axis.text.x = element_text(colour = "black", face = "bold", size = 12), 
+        legend.text = element_text(size = 12, face ="bold", colour ="black"), 
+        legend.position = "right", axis.title.y = element_text(face = "bold", size = 14), 
+        axis.title.x = element_text(face = "bold", size = 14, colour = "black"), 
+        legend.title = element_text(size = 14, colour = "black", face = "bold"), 
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA, size = 1.2),
+        legend.key=element_blank()) + 
+  labs(x = "NMDS1", colour = "GROUP", y = "NMDS2", shape = "Type")  + 
+  scale_colour_manual(values = c("RED", "BLUE","pink")) + stat_ellipse(geom = "polygon", aes(group = GROUP, color = GROUP, fill = GROUP), alpha = 0.05) +
+  annotate("text", x = -2, y = 7, label = paste0("Stress: ", format(nmds$stress, digits = 4)), hjust = 2) +
+  annotate("text", x = -2, y = 6, label = paste0("P=", format(ano$signif, digits = 4)), hjust = 3)+
+  scale_x_continuous(breaks = c(-8,-4,0, 4)) +
+  scale_y_continuous(breaks = c(-8,-4,0, 4))
+
+NMDS_HAP_noHAP
+
+pdf("NMDS_HAP_noHAP.pdf",width=10,height=8);
+NMDS_HAP_noHAP
+dev.off()
+
+# Supplementary FIGURE 7
 
 #Loess plot - Shannon index
 
@@ -189,7 +326,7 @@ pdf("Shannon_loessPlot_up.pdf",width=12,height=8);
 Shannon_loessPlot
 dev.off()
 
-# Supplementary FIGURE 6
+# Supplementary FIGURE 8
 
 #Loess plot - Richness
 data<-read.delim("Richness_over_time_before_HAP_onset.txt", row.names = 1)
@@ -222,82 +359,53 @@ Richness_loessPlot
 dev.off()
 
 
+# Supplementary FIGURE 9
 
-# Supplementary FIGURE 7
+library(tidyverse)
 
-Dynamics Weighted Unifrac Distance (WUF) in 16S rRNA (We used 16S rRNA data from Montassier et al., Nat Med. 2023;29(11):2793-2804)
+# define data from correlations test
 
-#Calculate Unifrac distance :
+data_long <- data %>%
+  pivot_longer(cols = c(Negative, Positive), names_to = "Interaction", values_to = "Count")
 
-library(phyloseq)
+
+data_long <- data_long %>%
+  group_by(Group) %>%
+  mutate(Total = sum(Count))
+
+data_long <- data_long %>%
+  mutate(Percentage = Count / Total * 100)
+
 library(ggplot2)
-library(ape)
 
-otu = read.delim(file="16S_count.txt",header=T,row.names=1,check.names=F) 
-tax = read.delim(file="taxonomy.txt",header=T,row.names=1,check.names=F)
-metadata = read.delim(file="metadata.txt",header=T,row.names=1,check.names=F)
+p <- ggplot(data_long, aes(x = "", y = Percentage, fill = Interaction)) +
+  geom_bar(stat = "identity", width = 1) + 
+  coord_polar("y", start = 0) +
+  theme_void() +
+  geom_text(aes(label = paste0(round(Percentage, 0), "%")),
+            position = position_stack(vjust = 0.5),
+            size = 20) +  
+  scale_fill_manual(values = c("pink", "lightblue")) +
+  facet_wrap(~ Group)  
 
-colnames(tax) = c(
-  "Superkingdom",
-  "Phylum",
-  "Class"	,
-  "Order"	,
-  "Family",
-  "Genus"	,
-  "Species",
-  "Strain")
-
-OTU = otu_table(as.matrix(otu), taxa_are_rows = TRUE)
-TAX = tax_table(as.matrix(tax))
-physeq = phyloseq(OTU, TAX)
-physeq = merge_phyloseq(physeq, sample_data(meta))
-random_tree = rtree(ntaxa(physeq), rooted=TRUE, tip.label=taxa_names(physeq))
-physeq1 = merge_phyloseq(physeq, sampledata, random_tree)
-dis<- UniFrac(physeq1, weighted=TRUE, normalized=TRUE, parallel=FALSE, fast=TRUE)
-write.table(dis,"WeightedUnifrac.txt", sep = '\t')
-
-#Plot Unifrac dynamics :
-
-data <- read.delim("WUF_SW_ov2_new_54.txt", stringsAsFactors = FALSE)
-data$GROUP <- factor(data$GROUP, levels = c("upcoming HAP", "no HAP"))
-custom_colors <- c("upcoming HAP" = "pink", "no HAP" = "blue")
-
-WUF_dynamics <- ggplot(data, aes(x = DAY, y = WUF, group = GROUP, color = GROUP)) +
-  geom_line() +
-  geom_point(shape=20, size=10) +
-  geom_ribbon(aes(ymin = LowerCI, ymax = UpperCI, fill = GROUP), alpha = 0.4) +
-  scale_color_manual(values = custom_colors) +
-  scale_fill_manual(values = custom_colors) +
-  scale_x_continuous(breaks = seq(-4,3)) +  
-  theme_classic() +
-  theme(
-    panel.background = element_rect(fill = "white"),
-    axis.title.x = element_text(size = 30),
-    axis.title.y = element_text(size = 30),
-    axis.text.x = element_text(size = 30),
-    axis.text.y = element_text(size = 25),
-    legend.text = element_text(size=25),
-    legend.title = element_blank()
-  ) +  
-  labs(x = "Days before HAP onset (Sliding window 2d)", y = "Weighted Unifrac Distance")
+p
 
 
-WUF_dynamics_stat <- WUF_dynamics + scale_y_continuous(breaks = c(0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1)) +scale_x_continuous(breaks = c(1, 2, 3, 4), labels = c("5-4", "4-3", "3-2", "2-1"))+
-  geom_text(data = data, aes(x = DAY, y = 0.6, label = ifelse(Pvalue < 0.0001, "****", ifelse(Pvalue < 0.001, "***", ifelse(Pvalue < 0.01, "**", ifelse(Pvalue < 0.05, "*", "ns"))))), color = "black", size = 16, vjust = -12.5)
 
-pdf("WUF_dynamics.pdf",width=15,height=10);
-WUF_dynamics_stat
+pdf("pie.pdf",width=20,height=10)
+
+p
+
 dev.off()
 
-# Supplementary FIGURE 8
-
+# Supplementary FIGURE 10
 
 library(ggplot2)
 library(reshape2)
 library(pheatmap)
 library(viridis)
 
-matrix <- read.delim("RELAB_prevhap_fam_agg.txt", header = TRUE, sep = "\t")
+matrix <- read.delim("RELAB_prevhap.txt", header = TRUE, sep = "\t")
 
 melted_data <- melt(matrix, id.vars = "fam")
 colnames(melted_data) <- c("Virus","Sample", "Value")
@@ -333,4 +441,88 @@ RELAB_heatmap_prevhap <- ggplot(melted_data, aes(fill = Virus, y = Value, x = Sa
 pdf("RELAB_heatmap_prevhap.pdf",width=20,height=15);
 RELAB_heatmap_prevhap
 dev.off()
+
+
+# Supplementary FIGURE 11
+
+Phage lifestyle Barplot
+
+#### Vibrant results
+
+#VIBRANT to predict lifestyles (lysogenic/lytic) for vOTUs with minimum sequence length of 1000bp and containing at least 4 ORFs (open readings frames) 
+
+singularity shell vibrant.sif
+VIBRANT_run.py -i viral_vOTUs.fasta -t 114 -folder VIBRANT_results -virome
+
+library(ggplot2)
+
+# Define the data (Vibrant output)
+
+# Define custom virus colors
+style_colors <- c("Lytic" = "wheat1", "Lysogenic" = "orange3")
+
+# Create the plot
+plot <- ggplot(data, aes(fill = Virus, y = Percent, x = Sample)) +
+  geom_bar(position = "stack", stat = "identity") +
+  scale_fill_manual(values = style_colors) +
+  labs(x = "Cohort",
+       y = "Percentage (%)") +
+  theme_classic() +
+  geom_col(colour = "black", stat = "identity") +
+  geom_text(aes(label = Value), position = position_stack(vjust = 0.5), size = 20, color = "black") +
+  theme(legend.text = element_text(size = 40),
+        legend.position = "bottom",
+        legend.title = element_blank(),
+        axis.title.y = element_text(size = 40),
+        axis.title.x = element_text(size = 40),
+        axis.title = element_text(size = 40),
+        axis.text.y = element_text(face = "bold", size = 40)) +
+  theme(axis.text.x = element_text(face = "bold", size = 40, colour = "black"))
+
+# Print the plot
+print(plot)
+
+
+pdf("Vibrant.pdf",width=15,height=20);
+plot
+dev.off()
+
+# Supplementary FIGURE 12
+library(tidyverse)
+
+# define data from correlations test
+
+data_long <- data %>%
+  pivot_longer(cols = c(Negative, Positive), names_to = "Interaction", values_to = "Count")
+
+
+data_long <- data_long %>%
+  group_by(Group) %>%
+  mutate(Total = sum(Count))
+
+data_long <- data_long %>%
+  mutate(Percentage = Count / Total * 100)
+
+library(ggplot2)
+
+p <- ggplot(data_long, aes(x = "", y = Percentage, fill = Interaction)) +
+  geom_bar(stat = "identity", width = 1) + 
+  coord_polar("y", start = 0) +
+  theme_void() +
+  geom_text(aes(label = paste0(round(Percentage, 0), "%")),
+            position = position_stack(vjust = 0.5),
+            size = 20) +  
+  scale_fill_manual(values = c("pink", "lightblue")) +
+  facet_wrap(~ Group)  
+
+p
+
+
+
+pdf("pie.pdf",width=20,height=10)
+
+p
+
+dev.off()
+
 ############################################################################################################################################################
