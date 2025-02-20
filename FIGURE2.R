@@ -15,7 +15,7 @@ dataTransposed<-t(data)
 richness <- specnumber(dataTransposed) 
 write.table(richness,"Richness.txt", sep = '\t')
 
-# Alphadiv FIGURE 2A - Alphadiv HAP/noHAP
+# Alphadiv FIGURE 2A - Alphadiv
 
 #Dot plot - Shannon
 
@@ -65,7 +65,7 @@ Shannon_dotplot
 dev.off()
 
 
-# Alphadiv FIGURE 2B - Alphadiv HAP/noHAP
+# Alphadiv FIGURE 2B - Alphadiv
 
 
 #Dot plot - Richness

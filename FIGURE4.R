@@ -148,37 +148,6 @@ for (n in 1:nrow(otu_data)){
   otu_data$p.value[n]<-fisher.test(otu_data_3)$p.value
 }
 
-
-library(ggplot2)
-
-data <- read.delim("fisher_output.txt")
-
-HAP_noHAP_specific_vOTUs <- ggplot(data, aes(reorder(OTU, PVAL), PVAL, fill = CLASS)) +
-  geom_bar(stat = "identity", width = 0.8, size = 0.3) +
-  coord_flip() +
-  theme_bw() +
-  scale_fill_manual(values = c("Caudoviricetes" = "green3","Other bacteriophages" ="#ffcc00", "Unclassified viruses" = "grey28", "Eukaryotic viruses" = "grey")) +
-  theme(strip.placement = "outside",
-        strip.text.y = element_text(angle = 0)) +
-  labs(title = "", x = "Significant vOTUs", y = "Fisher test -log10(P-Value)")+
-  theme_classic() +
-  theme(panel.background = element_rect(fill = "white"),
-        strip.background = element_blank(),
-        strip.text = element_text(size=40),
-        legend.title = element_blank(),
-        axis.text.y = element_blank(),
-        axis.title.y = element_text(size = 40),
-        axis.title.x = element_text(size = 40),
-        axis.text.x = element_text(size = 40),
-        plot.title = element_blank(),
-        legend.text = element_text(size = 30),
-        legend.position = "bottom") + facet_wrap(~GROUP)
-
-
-pdf("signature_vOTUs_fisher.pdf",width=16,height=11);
-HAP_noHAP_specific_vOTUs
-dev.off()
-
 # FIGURE 4C - Lefse
 
 #Use LEfSe to identify discriminant vOTUs in the signature 5-4 days before the HAP onset.
@@ -188,40 +157,42 @@ dev.off()
 #format_input.py vOTUs_log10RPKM_HAP.txt HAP_lefse_input.in -c 1 -u 2 -o 1000000
 #run_lefse.py HAP_lefse_input.in HAP_lefse_output.res
 
+#Merge Lefse and fisher outputs in one table and plot heatmap
 
-library(ggplot2)
+library(pheatmap)
+matrix <- read.delim("data.txt", header = TRUE, sep = "\t", row.names = 1)
+my_sample_col <- read.table("metacol.txt", header = TRUE, sep = "\t",row.names = 1)
+my_sample_row <- read.table("metarow.txt", header = TRUE, sep = "\t",row.names = 1)
+ann_colors = list(
+  Group = c("upcoming HAP" = "pink", "no HAP" = "blue")
+)
 
-data <- read.delim("LDA.res")
-
-HAP_discriminant_vOTUs <- ggplot(data, aes(reorder(Taxon, LDA), LDA, fill = CLASS)) +
-  geom_bar(stat = "identity", width = 0.7, size = 0.5) +
-  coord_flip() +
-  theme_bw() +
-  scale_fill_manual(values = c("Caudoviricetes" = "green3","Other bacteriophages" ="#ffcc00", "Unclassified viruses" = "grey28", "Eukaryotic viruses" = "grey")) +
-  theme(strip.placement = "outside",
-        strip.text.y = element_text(angle = 0)) +
-  labs(title = "LEfSe of vOTUs in HAP signature", x = "Differential abundant vOTUs", y = "LDA score (Log10)")+
-  theme_classic() +
-  theme(panel.background = element_rect(fill = "white"),
-        strip.background = element_blank(),
-        strip.text = element_text(size=40),
-        legend.title = element_blank(),
-        axis.text.y = element_blank(),
-        axis.title.y = element_text(size = 40),
-        axis.title.x = element_text(size = 40),
-        axis.text.x = element_text(size = 40),
-        plot.title = element_blank(),
-        legend.text = element_text(size = 30),
-        legend.position = "bottom") + facet_wrap(~Group)
-
-
-pdf("HAP_lefse_output.pdf",width=16,height=11);
-HAP_discriminant_vOTUs
+heatmap <- pheatmap(
+  matrix,
+  scale = "row",
+  color = colorRampPalette(c('darkblue', 'white', 'red'))(100),
+  annotation_row = my_sample_row,
+  annotation_col = my_sample_COL,
+  cluster_cols = F,
+  cellheight = 10,
+  cellwidth = 5,
+  cluster_rows =T,
+  annotation_colors = ann_colors,
+  fontsize = 10, 
+  fontsize_row = 10,
+  fontsize_col = 5, 
+  legend = TRUE,
+  border_color = "white",
+  na_col = "grey",
+  annotation_legend = TRUE, show_colnames = F, show_rownames = F, angle_col = 90
+)
+pdf("heatmap.pdf",width=20,height=14)
+heatmap
 dev.off()
 
 # FIGURE 4D
 
-#Run correlation tests on  log10(relative_abundace) of HAP-associated vOTUs and the core respiratory bacteriome
+#Run correlation tests on  log10(relative_abundace) of viral signature vOTUs and the core respiratory bacteriome
 
 # Load necessary libraries
 library(corrplot)
@@ -256,34 +227,41 @@ write.table(cor_matrix, file = "correlation_matrix.txt", sep = "\t", quote = FAL
 write.table(p_matrix, file = "pvalue_matrix.txt", sep = "\t", quote = FALSE)
 
 
-#Use correlation output in Sankeyplot
+#Use correlation output for bubble plot
 
-library(ggplot2)
-library(networkD3)
+library(ggtext)
 library(dplyr)
-library(ggsankeyfier)
-library(webshot)
+library(ggplot2)
 
-links <- read.delim("Correlations.txt")
+results_sig = read.delim(file="Correlations.txt",header=T,check.names=F)
 
+results_sig <- results_sig %>%
+  arrange(desc(Occurrence_Percentage))  # Sort the data
 
-nodes <- data.frame(
-  name=c(as.character(links$source), as.character(links$target)) %>% 
-    unique()
-)
+results_sig$OTU <- factor(results_sig$OTU, levels = unique(results_sig$OTU))
 
+correlations <- ggplot(results_sig, aes(x = row, y = OTU)) +
+  geom_point(aes(size = abs(Occurrence_Percentage), color = cor, alpha = 1, shape = Lifestyle)) + 
+  scale_color_gradient2(low = "red", mid = "white", high = "blue") +
+  scale_shape_manual(values = c("lytic" = 16, "lysogenic" = 17, "Unknown" = 18)) +
+  coord_flip() +
+  labs(
+    x = "", 
+    y = "Feature", 
+    size = "Occurrence Percentage"
+  ) +
+  theme_bw() + 
+  theme(
+    legend.title = element_text(size = 10),
+    legend.text = element_text(size = 10),
+    axis.title.y = element_text(size = 12, face = "bold"),
+    axis.title.x = element_text(size = 12, face = "bold"),
+    axis.text.x = element_text(size = 1, angle = 90, hjust = 1),
+    axis.text.y = element_markdown(size = 12)
+  ) + facet_grid(Type~group, scales = "free")
 
-links$IDsource <- match(links$source, nodes$name)-1 
-links$IDtarget <- match(links$target, nodes$name)-1
+correlations
 
-links$group <- as.factor(c("..."))
-nodes$group <- as.factor(c("my_unique_group"))
-links_color <- 'd3.scaleOrdinal() .domain(["neg", "pos","my_unique_group"]) .range(["red", "blue","grey"])'
-
-
-p <- sankeyNetwork(Links = links, Nodes = nodes, Source = "IDsource", Target = "IDtarget", 
-                   Value = "value", NodeID = "name", colourScale=links_color,
-                   fontSize = 20, nodeWidth = 50, nodePadding=5,LinkGroup="group", NodeGroup="group")
-p 
-
-saveNetwork(p, "sankey.html", selfcontained = TRUE)
+pdf("correlations.pdf",width=30,height=10);
+correlations
+dev.off()

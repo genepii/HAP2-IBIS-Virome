@@ -1,31 +1,101 @@
 ############################################################################################################################
 #### CODE USED TO GENERATE FIGURE 1
 ############################################################################################################################
+# Effect size 1A-B
 
-# heatmap FIGURE 1A
+library(vegan)
+library(ggplot2)
+
+# Read data
+otu = read.delim(file="dRPKM.txt", header=T, row.names=1, check.names=F)
+env = read.delim(file="metadata.txt", header=T, row.names = 1, check.names=F) 
+
+# Hellinger transformation of the OTU data
+otu_hel <- decostand(otu, method = 'hellinger')
+otu_hel = t(otu_hel)
+
+# Perform PCA
+otupca <- rda(otu_hel, env, scale = FALSE)
+summary(otupca, scaling = 1)
+plot(otupca, choices = c(1, 2), scaling = 1,  display = c('wa'))
+
+# Perform envfit to assess the relationship between environmental variables and the PCA axes
+otupca_ef <- envfit(otupca, env, perm = 999, choices = c(1, 2), display = 'sites')
+otupca_ef
+
+# p-value adjustment with FDR method
+otupca_ef_adj <- otupca_ef
+otupca_ef_adj$factors$pvals <- p.adjust(otupca_ef_adj$factors$pvals, method = 'fdr')
+otupca_ef_adj$vectors$pvals <- p.adjust(otupca_ef_adj$vectors$pvals, method = 'fdr')
+otupca_ef_adj
+
+env_effect_size <- otupca_ef$vectors$r
+env_variables <- colnames(env)
+env_p_values <- otupca_ef$vectors$pvals 
+
+effect_size_df <- data.frame(
+  Variable = env_variables,
+  EffectSize = env_effect_size,
+  PValue = env_p_values
+)
+
+effect_size_df$PercentageVariation <- (effect_size_df$EffectSize / sum(effect_size_df$EffectSize)) * 100
+
+effect_size_df$AdjPValue <- p.adjust(effect_size_df$PValue, method = "fdr")
+
+significance_threshold <- 0.05
+
+effect_size_df$Significant <- ifelse(effect_size_df$PValue < significance_threshold, 
+                                     "*", "")
+
+effect_size_df$Significant <- ifelse(effect_size_df$PValue < 0.001, "***", effect_size_df$Significant)
+effect_size_df$Significant <- ifelse(effect_size_df$PValue < 0.01 & effect_size_df$PValue >= 0.001, "**", effect_size_df$Significant)
+effect_size_df$Significant <- ifelse(effect_size_df$PValue < 0.05 & effect_size_df$PValue >= 0.01, "*", effect_size_df$Significant)
+
+# Plot the effect sizes with significance stars using ggplot2
+ES<-ggplot(effect_size_df, aes(x = reorder(Variable, EffectSize), y = EffectSize, fill = Variable)) +
+  geom_bar(stat = 'identity') +  # Plot the effect sizes
+  geom_text(aes(label = Significant), vjust = -0.5, hjust = 0, size = 10) +
+  coord_flip() +  
+  xlab('') +
+  ylab('Effect Size (R²)') +
+  theme_classic() +
+  scale_fill_brewer(palette = "Set3")+
+  theme(axis.text.x = element_text(size = 30),
+        axis.text.y = element_text(size = 30),
+        axis.title.x = element_text(size = 30),
+        legend.position = "none")
+
+ES
+pdf("effect_size.pdf", height = 7, width = 12)
+ES
+dev.off()
+
+# heatmap 1C
 
 library(gplots)
 library(ComplexHeatmap)
 
 # Read the matrix and keep NA values
-matrix <- read.delim("RPKMcounts.txt", header = TRUE, sep = "\t", row.names = 1)
+matrix <- read.delim("dRPKM.txt", header = TRUE, sep = "\t", row.names = 1)
 
 # Read the sample annotations
 my_sample_col <- read.table("metadata.txt", header = TRUE, sep = "\t", row.names = 1)
 
-prevalence <- rowSums(!is.na(matrix) & matrix != 0) / ncol(matrix)
+matrix<-matrix[apply(matrix,1,function(x)length(x[x>0]))>=0.5*ncol(matrix),]
 
-# Filter families based on prevalence threshold of 50%
-threshold <- 0.9
-matrix_filtered <- matrix[prevalence >= threshold, ]
+matrix <- matrix[, colSums(matrix) != 0]
 
-# Select top 10 families based on row sums
-family_sums <- rowSums(matrix_filtered, na.rm = TRUE)
-top10_families <- names(sort(family_sums, decreasing = TRUE))[1:10]
+# Keep only the samples present in the matrix
+my_sample_col <- my_sample_col[colnames(matrix), , drop = FALSE]
+
+# Select top 30 genera based on row sums
+family_sums <- rowSums(matrix, na.rm = TRUE)
+top10_families <- names(sort(family_sums, decreasing = TRUE))[1:30]
 matrix_top10 <- matrix[top10_families, ]
 
 # Perform log transformation, handling zero values to avoid -Inf
-transformed_matrix <- log10(matrix_top10)
+transformed_matrix <- log10(matrix)
 transformed_matrix[transformed_matrix=="-Inf"] <- NA
 
 col = list(HAP.condition = c("HAP" = "red", "no HAP" = "blue"),
@@ -43,67 +113,111 @@ ha <- HeatmapAnnotation(
     ARDS.condition = list(title_gp = gpar(fontsize = 30), labels_gp = gpar(fontsize = 30)),
     Death = list(title_gp = gpar(fontsize = 30), labels_gp = gpar(fontsize = 30))
   ),
-  annotation_name_gp = gpar(fontsize = 30)
+  annotation_name_gp = gpar(fontsize = 10)
 )
 
 
 pdf("heatmap.pdf", width = 20, height = 14)
-
-# Combine the heatmap and the annotation
-Heatmap(transformed_matrix, name = "log10RPKM",
-        top_annotation = ha,
-        row_names_gp = gpar(fontsize = 30),
-        column_names_gp = gpar(fontsize = 0))
+ 
+Heatmap(
+  transformed_matrix, 
+  name = "log10RPKM",
+  cluster_rows = F,
+  cluster_columns = F,
+  top_annotation = ha,  
+  row_names_gp = gpar(fontsize = 10),
+  column_names_gp = gpar(fontsize = 0),
+  heatmap_legend_param = list(
+    legend_direction = "horizontal", 
+    legend_position = "top"          
+  )
+)
 
 dev.off()
 
-# FIGURE 1B - Phages lifestyles
 
-#VIBRANT to predict lifestyles (lysogenic/lytic) for vOTUs with minimum sequence length of 1000bp and containing at least 4 ORFs (open readings frames) 
+##### Otu prevalence_abundance 1D
 
-singularity shell vibrant.sif
-VIBRANT_run.py -i vOTUs.fasta -t 114 -folder VIBRANT_results -virome
+library(ggplot2)
+library(reshape2)
+library(readr)
+library(RColorBrewer)
+
+data  = read.delim(file="data.txt",header=T,check.names=F)
+
+data$Occurrence_Percentage <- as.numeric(data$Occurrence_Percentage)
+
+sig <- ggplot(data, aes(x = MRA, y = Occurrence_Percentage, color = Type)) +
+  geom_point(alpha = 0.4, size = 5) +
+  theme_classic() +
+  labs(title = "", x = "Log10MRA", y = "Occurrence Percentage") +
+  theme(
+    legend.position = "right"
+    ,
+    axis.text.x = element_text(size = 20),
+    axis.text.y = element_text(size = 20),
+  )
+
+sig
+
+pdf("MRA_occurence.pdf",width=5,height=5);
+sig
+dev.off()
+
+#1E - Phages lifestyles
+in bash run phabox2
+#conda activate phabox2
+#phabox2 --task end_to_end --dbdir /phabox_db_v2 --outpth  output_folder --contigs vOTUs.fasta --threads 70 --len 300
 
 library(ggplot2)
 
-# Define the data (Vibrant output)
+library(dplyr)
+
+# Define the raw dataset
+dara_raw=phabox_predictions
+# Convert to long format for ggplot
+data_long <- tidyr::pivot_longer(data_raw, cols = c("Lytic", "Lysogenic"), names_to = "Virus", values_to = "Value")
+
+# Calculate percentages
+data_long <- data_long %>%
+  group_by(Sample) %>%
+  mutate(Percent = (Value / sum(Value)) * 100)
 
 # Define custom virus colors
-style_colors <- c("Lytic" = "wheat1", "Lysogenic" = "orange3")
+style_colors <- c("Lytic" = "gold2", "Lysogenic" = "seagreen")
 
 # Create the plot
-plot <- ggplot(data, aes(fill = Virus, y = Percent, x = Sample)) +
+plot <- ggplot(data_long, aes(fill = Virus, y = Percent, x = Sample)) +
   geom_bar(position = "stack", stat = "identity") +
   scale_fill_manual(values = style_colors) +
   labs(x = "",
        y = "Percentage (%)") +
   theme_classic() +
   geom_col(colour = "black", stat = "identity") +
-  geom_text(aes(label = Value), position = position_stack(vjust = 0.5), size = 20, color = "black") +
-  theme(legend.text = element_text(size = 40),
+  geom_text(aes(label = Value), position = position_stack(vjust = 0.5), size = 6, color = "black") +
+  theme(legend.text = element_text(size = 14),
         legend.position = "bottom",
         legend.title = element_blank(),
-        axis.title.y = element_text(size = 40),
-        axis.title.x = element_text(size = 40),
-        axis.title = element_text(size = 40),
-        axis.text.y = element_text(face = "bold", size = 40)) +
-  theme(axis.text.x = element_text(face = "bold", size = 40, colour = "black"))
+        axis.title.y = element_text(size = 14),
+        axis.title.x = element_text(size = 14),
+        axis.text.y = element_text(face = "bold", size = 14),
+        axis.text.x = element_text(face = "bold", size = 14, colour = "black"))
 
 # Print the plot
 print(plot)
 
-pdf("Vibrant_IBIS_compa.pdf",width=15,height=20);
+pdf("phabox.pdf",width=7.5,height=10)
 plot
 dev.off()
 
-# FIGURE 1C - BETADIVERSITY
+# FIGURE 1F - BETADIVERSITY
 
 # BETADIV 
 
 # BRAY CURTIS
 
 library(vegan)
-data1<-read.delim("RPKMcounts.txt", row.names = 1)
+data1<-read.delim("RPKM_bacteriome_deconta_rarefied.txt", row.names = 1)
 dataTransposed1<-t(data1)
 dis <- vegdist(dataTransposed1, method = "bray")
 dis2<-as.matrix(dis)
@@ -112,7 +226,8 @@ write.table(dis2,"WeightedBrayCurtis.txt", sep = '\t')
 # Hellinger
 
 library(adespatial)
-data2 <-read.delim("log10(RPKM+1)counts.txt", row.names=1)
+data2 <-read.delim("RPKM_bacteriome_deconta_rarefied.txt", row.names=1)
+data2 <-log10(data2+1)
 dataTransposed2 <-t(data2)
 dist.hel <-dist.ldc(dataTransposed2, method = "hellinger")
 dist2 <-as.matrix(dist.hel)
@@ -121,7 +236,8 @@ write.table(dist2, "Hellinger.txt", sep = '\t')
 # Sorensen 
 
 library(vegan)
-data3<-read.delim("Presence_absence_counts.txt", row.names = 1)
+data3<-read.delim("RPKM_bacteriome_deconta_rarefied.txt", row.names = 1)
+data3[data3 > 0] <- 1
 dataTransposed3<-t(data3)
 dis <- vegdist(dataTransposed3, method = "bray")
 dis2<-as.matrix(dis)
@@ -131,7 +247,7 @@ write.table(dis2,"Sorensen.txt", sep = '\t')
 
 library(reshape2)
 
-data <- read.delim("Betadiv_superimposed_matrix.txt", stringsAsFactors = FALSE, row.names = 1, header = TRUE, check.names = FALSE)
+data <- read.delim("Hellinger.txt", stringsAsFactors = FALSE, row.names = 1, header = TRUE, check.names = FALSE)
 
 superimposed_matrix <- as.matrix(data)
 upper_logical <- upper.tri(superimposed_matrix)
@@ -146,7 +262,7 @@ print(upper_triangle_subset)
 # Reshape the data into a vertical table format
 melted_data <- melt(upper_triangle_subset, id.vars = "sample1", variable.name = "sample2", value.name = "value")
 colnames(melted_data) <- c("sample1", "sample2", "value")
-write.table(melted_data, file="Formated_betadiv_table.txt", sep = "\t")
+write.table(melted_data, file="hel_format.txt", sep = "\t")
 
 
 ***(the input file of betadiversity analysis contain the metric medians calculated between patients or within patients)***
@@ -155,53 +271,63 @@ write.table(melted_data, file="Formated_betadiv_table.txt", sep = "\t")
 
 "Tables containing median values from WBC, Hellinger or Sorensen served as input for statistical and dynamics analysis"
 
-# FIGURE 1C - WBC
+# FIGURE 1F - WBC
 
 library(ggplot2)
 library(tidyverse)
 library(rstatix)
 library(ggpubr)
 
-data <- read.delim("WBC_between_within.txt", stringsAsFactors = FALSE)
-head(data)
+dat <- read.delim("WBC.txt", stringsAsFactors = FALSE)
+head(dat)
 
-data %>% sample_n_by(GROUP, size = 2)
-data %>%
+dat %>% sample_n_by(GROUP, size = 2)
+dat %>%
   group_by(GROUP) %>%
-  get_summary_stats(WBC, type = "median_iqr")
+  get_summary_stats(VirF, type = "median_iqr")
 
-stat.test <- data %>% 
-  wilcox_test(WBC ~ GROUP) %>%
+stat.test <- dat %>% 
+  wilcox_test(VirF ~ GROUP) %>%
   add_significance()
 stat.test
-data %>% wilcox_effsize(WBC ~ GROUP)
+dat %>% wilcox_effsize(VirF ~ GROUP)
 stat.test <- stat.test %>% add_xy_position(x = "GROUP")
 
-WBC_Between_within_violin <- ggplot(data, aes(GROUP, WBC)) +
-  geom_violin(aes(fill = GROUP), color = "black", trim = TRUE) +  
-  geom_boxplot(aes(fill = GROUP), width = 0.05, color = "black", outlier.shape = NA) +  
-  scale_fill_manual(values = c("Inter patients" = "magenta", "Intra patients" = "green3"), name = "GROUP") +  
-  stat_pvalue_manual(stat.test, tip.length = 0, size = 20, y.position = 1.1, bracket.size = 2) +
+ggplot(dat, aes(GROUP, VirF)) +  
+  # Boxplot layer: will be drawn first, in the background
+  geom_boxplot(aes(fill = GROUP), width = 0.4, color = "black", outlier.shape = NA, alpha = 0.2) +  
+  scale_fill_manual(values = c("C1" = "red", "C2" = "blue"), name = "GROUP") +  
+  
+  # Add p-value annotation with stat_pvalue_manual()
+  stat_pvalue_manual(stat.test, tip.length = 0, size = 10, y.position = 9, bracket.size = 2) +
+  
+  # Customize labels and theme
   labs(subtitle = get_test_label(stat.test, detailed = TRUE)) +
   theme_classic() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_text(size = 40),
-        axis.text.x = element_text(size = 40, colour = "black", face = "bold"),
-        axis.text.y = element_text(size = 40),
-        plot.subtitle = element_text(size = 30),
-        legend.text = element_text(size = 40),
-        legend.position = "none") +
-  labs(
-    subtitle = get_test_label(stat.test, detailed = TRUE),
-    y = "Bray-Curtis dissimilarity"
-  )
+  theme(
+    axis.title.x = element_blank(),
+    axis.title.y = element_text(size = 40),
+    axis.text.x = element_text(size = 40, colour = "black"),
+    axis.text.y = element_text(size = 40),
+    plot.subtitle = element_text(size = 30),
+    legend.text = element_text(size = 40),
+    legend.position = "none"
+  ) +
+  
+  # Y-axis label
+  labs(y = "Shannon_BAC") +
+  
+  # Jittered points layer: will be drawn last, in the foreground
+  geom_jitter(aes(color = GROUP), width = 0.03, size = 10, alpha = 0.4) +
+  scale_color_manual(values = c("C1" = "red", "C2" = "blue"))
 
-pdf("WBC_Between_within_violin.pdf",width=12,height=9);
-WBC_Between_within_violin
-dev.off()
+
+#pdf("WBC_Between_within_violin.pdf",width=12,height=9);
+#WBC_Between_within_violin
+#dev.off()
 
 
-# BETADIV FIGURE 1C  - Hellinger
+# BETADIV FIGURE 1F  - Hellinger
 
 library(ggplot2)
 library(tidyverse)
@@ -248,7 +374,7 @@ dev.off()
 
 
 
-# BETADIV FIGURE 1C  - Sorensen
+# BETADIV FIGURE 1F  - Sorensen
 
 library(ggplot2)
 library(tidyverse)

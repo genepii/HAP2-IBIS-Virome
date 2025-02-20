@@ -1,6 +1,6 @@
 # HAP2-IBIS Virome
 
-All codes for: Anani et al, 2024. Respiratory virome convergence precedes Hospital-Acquired Pneumonia in critically ill patients.
+All codes for: Anani et al, 2025. Respiratory virome convergence precedes Hospital-Acquired Pneumonia in critically ill patients.
 
 Scripts shoud be run individually in independent orders.
 
@@ -20,11 +20,14 @@ The scripts are detailed by figure
 - FIGURE3
 - FIGURE4
 - FIGURE5
+- FIGURE6
 
 ## Additional scripts
 -  Clinical_table
 -  Additional_shell_scripts
 -  Additional_R_scripts
+-  Phylogenetic_scripts
+-  TKNA
 
 ## Viral Metagenomics Pipeline
 
