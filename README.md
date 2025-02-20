@@ -2,8 +2,6 @@
 
 All codes for: Anani et al, 2025. Lung virome convergence precedes Hospital-Acquired Pneumonia in intubated critically ill patients.
 
-Scripts shoud be run individually in independent orders.
-
 ## Contents
 
 Shell scripts :
