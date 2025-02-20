@@ -1,6 +1,6 @@
 # HAP2-IBIS Virome
 
-All codes for: Anani et al, 2025. Respiratory virome convergence precedes Hospital-Acquired Pneumonia in critically ill patients.
+All codes for: Anani et al, 2025. Lung virome convergence precedes Hospital-Acquired Pneumonia in intubated critically ill patients.
 
 Scripts shoud be run individually in independent orders.
 
